@@ -35,7 +35,7 @@ $(LIB): $(LIB_OBJECTS)
 
 .c.o:
 	$(CC) $(CFLAGS) $< -o $@
-	
+
 test.o : wregex.h wrx_prnt.h
 wrx_comp.o : wregex.h wrxcfg.h
 wrx_exec.o : wregex.h wrxcfg.h	

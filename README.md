@@ -13,9 +13,10 @@ implementations (See my references below), this implementation is entirely my
 own.
 
 Just a small disclaimer: 
-1) WRegex tries to be practical, but it does not try to conform to any standards
+
+1. WRegex tries to be practical, but it does not try to conform to any standards
 	(since it was written for use in a scripting language)
-2) I have no intention of adding Unicode support (it seems that if I wanted 
+2. I have no intention of adding Unicode support (it seems that if I wanted 
 	Unicode support, I should've designed for it from the beginning).
 
 (now with more than 3200 lines of code, comments included)	
@@ -23,15 +24,15 @@ Just a small disclaimer:
 ### Usage
 
 Like most regular expression engines, WRegex first requires that the regular 
-expression first be compiled to a NFA-like data structure (wrx_nfa defined in 
-wregex.h). The compilation happens in the function wrx_comp() which takes a
+expression first be compiled to a NFA-like data structure (`wrx_nfa` defined in 
+`wregex.h`). The compilation happens in the function `wrx_comp()` which takes a
 string (char*) argument containing the expression, and returns the compiled NFA 
 structure (its two other parameters are pointers to integers for reporting 
 errors).
 
-Once the expression has been compiled, the wrx_nfa is used to match a string in
-the `wrx_exec()` function. You can reuse the wrx_nfa and don't need to call 
-wrx_comp() again. `wrx_exec()` returns 1 on a match, 0 on a non-match and less 
+Once the expression has been compiled, the `wrx_nfa` is used to match a string in
+the `wrx_exec()` function. You can reuse the `wrx_nfa` and don't need to call 
+`wrx_comp()` again. `wrx_exec()` returns 1 on a match, 0 on a non-match and less 
 than 0 on a runtime error. It also takes a pointer to an array where the 
 extracted sub-matches are to be stored.
 
@@ -45,7 +46,7 @@ deallocated using the `wrx_free_nfa()` function.
 
 Additionally, two functions, `wrx_print_nfa()` and `wrx_print_dot()` are provided in
 wrx_prnt.c that outputs the wrx_nfa structure's states after it has been 
-compiled. wrx_print_nfa() writes the states to stdout while wrx_print_dot()
+compiled. `wrx_print_nfa()` writes the states to stdout while `wrx_print_dot()`
 writes a text file that can be used as input to the DOT program 
 (http://www.research.att.com/sw/tools/graphviz/) to draw a graph containing all
 the states and transitions in the wrx_nfa. These two functions are intended for 
@@ -63,18 +64,14 @@ Two example programs are provided to demonstrate the API:
 2. `wgrep.c` is a grep-like program that accepts a pattern and a text file as 
 	input, and outputs all lines in the file which matches that pattern.
 
-==============================================================================
+## Compiling
 
 The code has been written using only standard C functions, and I've used the
-"-Wall -Werror -pedantic" flags when compiling, with the goal of portability. 
+`"-Wall -Werror -pedantic"` flags when compiling, with the goal of portability. 
 
-The Makefile works with the MinGW port of GCC under Windows. 
+The Makefile works with Linux and the MinGW port of GCC under Windows. 
 
-Run `make` under MSYS (I've also found that the 'make' from 
-http://unxutils.sourceforge.net works, but with mixed results on different 
-computers).
-
-The default build uses -O2 for optimization and strips debug symbols from the 
+The default build uses `-O2` for optimization and strips debug symbols from the 
 output file for smaller binaries. Make the debug target to build a debug 
 version with debug symbols suitable for debugging with GDB and with 
 optimization turned off, like so:
@@ -94,24 +91,24 @@ seen, with each of the major functions in a separate source file.
 
 Here's what they do:
 
-* wregex.h	- Header file with the data structures and prototypes. You need to
-	#include this in any source file that will be using the regex matcher.
-* wrxcfg.h	- Header file used internally. It contains definitions used by 
+* `wregex.h`	- Header file with the data structures and prototypes. You need to
+	`#include` this in any source file that will be using the regex matcher.
+* `wrxcfg.h`	- Header file used internally. It contains definitions used by 
 	wrx_comp.c and wrx_exec.c. You don't need to expose this.
-* wrx_comp.c	- Contains the wrx_comp() function's definition. It compiles a regex
+* `wrx_comp.c`	- Contains the `wrx_comp()` function's definition. It compiles a regex
 				into an wrx_nfa NFA data structure.
-* wrx_exec.c	- Contains the wrx_exec() function's definition. It matches a string
+* `wrx_exec.c`	- Contains the `wrx_exec()` function's definition. It matches a string
 				to to a compiled NFA.
-* wrx_free.c	- Contains the wrx_free() function's definition. It free()'s an NFA 
-				created by wrx_comp().
-* wrx_err.c	- Contains the wrx_err() function's definition. It describes error 
-				codes returned by wrx_comp() and wrx_exec()
-* wrx_prnt.c	- Contains functions to print the NFA to stdout or to a input file 
+* `wrx_free.c`	- Contains the `wrx_free()` function's definition. It `free()`'s an NFA 
+				created by `wrx_comp()`.
+* `wrx_err.c`	- Contains the `wrx_err()` function's definition. It describes error 
+				codes returned by `wrx_comp()` and `wrx_exec()`
+* `wrx_prnt.c`	- Contains functions to print the NFA to stdout or to a input file 
 	for the DOT program (of the Graphviz package). I use these only for testing 
 	and debugging wrx_comp() and friends.
-* wrx_prnt.h	- prototypes for the functions in wrx_prnt.c
-* test.c - The test program.
-* wgrep.c - Source file for the wgrep example program
+* `wrx_prnt.h`	- prototypes for the functions in wrx_prnt.c
+* `test.c` - The test program.
+* `wgrep.c` - Source file for the wgrep example program
 
 ## Syntax
 
@@ -128,40 +125,40 @@ The syntax of the pattern matcher is thus the following
 		where c is any printable ASCII character (>= 0x20)
 
 The syntax has the following features:
-* A '^' at the beginning of the pattern forces a match at the beginning of 
+* A `'^'` at the beginning of the pattern forces a match at the beginning of 
 	a line, or after a newline/ carriage return
-* A '$' at the end of the pattern forces a match at the end of the line
-* The '|' operator has the lowest precedence. "abc|def" matches "abc" or 
-	"def"
+* A `'$'` at the end of the pattern forces a match at the end of the line
+* The `'|'` operator has the lowest precedence. `"abc|def"` matches `"abc"` or 
+	`"def"`
 * Brackets are used for grouping. Expressions enclosed in brackets also 
 	capture sub-matches. Sub-matches are numbered according to the order in 
-	which the '('s appear, starting from 1, so for example in "((abc)(def))" 
-	submatch[1] would capture "abcdef", [2] would capture "abc" and [3] 
-	would capture "def"
-	(submatch[0] captures the entire matching part of the string, as if 
-	there's an invisible '(' and ')' around the regex)
+	which the '('s appear, starting from 1, so for example in `"((abc)(def))"`
+	`submatch[1]` would capture `"abcdef"`, `[2]` would capture `"abc"` and `[3]` 
+	would capture `"def"`
+	(`submatch[0]` captures the entire matching part of the string, as if 
+	there's an invisible `'('` and `')'` around the regex)
 * An escape character followed by some digits specify a back reference match
 	where the remainder of the input string is matched against a submatch.
 	Remember that the submatches are indexed from 1, for example, the 
-	pattern "(abc)def\1" will match against "abcdefabc"
-* A opening bracket followed by a ':' is only used for grouping, but not for
-	capturing a submatch, for example in "((:abc)(def))" submatch[0] would
-	capture "abcdef" and [1] would capture "def" since the (:...) around
+	pattern `"(abc)def\1"` will match against "abcdefabc"
+* A opening bracket followed by a `':'` is only used for grouping, but not for
+	capturing a submatch, for example in `"((:abc)(def))"` `submatch[0]` would
+	capture `"abcdef"` and `[1]` would capture `"def"` since the `(:...)` around
 	"abc" don't capture
-* A '*' following a "(expr)" or a "value" means match zero or more, for
-	example, "a*" will match "", "a", "aa", "aaa" etc. 
-* A '+' following a "'('list')'" or a "value" means match one or more, for
-	example, "a+" will match "a", "aa", "aaa" etc. but not ""
-* A '?' following a "'('list')'" or a "value" means match zero or one, for
-	example, "a?" will match "" or "a".
-* wregex supports "lazy"/non-greedy evaluation of the '*' and '+' (and the  
-	'?') operators by following them with a '?'.
-* "a{m}" means match exactly m "a"s. eg. "a{3}" is equivalent to "aaa" 
-* "a{m,}" means match at least m "a"s. eg. "a{3}" is equivalent to "aaa+"
-* "a{,n}" means match at most n "a"s. eg. "a{,3}" is equivalent to "a?a?a?"
-* "a{m,n}" means match at least m but not more than n "a"s. eg. "a{3,5}" is 
+* A `'*'` following a `"(expr)"` or a "value" means match zero or more, for
+	example, `"a*"` will match `""`, `"a"`, `"aa"`, `"aaa"` etc. 
+* A `'+'` following a `"'('list')'"` or a "value" means match one or more, for
+	example, `"a+"` will match `"a"`, `"aa"`, `"aaa"` etc. but not `""`
+* A `'?'` following a `"'('list')'"` or a `"value"` means match zero or one, for
+	example, `"a?"` will match `""` or `"a"`.
+* wregex supports "lazy"/non-greedy evaluation of the `'*'` and `'+'` (and the  
+	`'?'`) operators by following them with a `'?'`.
+* `"a{m}"` means match exactly m "a"s. eg. `"a{3}"` is equivalent to `"aaa"` 
+* `"a{m,}"` means match at least m "a"s. eg. `"a{3}"` is equivalent to `"aaa+"`
+* `"a{,n}"` means match at most n "a"s. eg. `"a{,3}"` is equivalent to `"a?a?a?"`
+* `"a{m,n}"` means match at least m but not more than n "a"s. eg. "a{3,5}" is 
 	equivalent to "aaaa?a?"
-* "a{}" and "a{,}" are treated like "a*"
+* `"a{}"` and `"a{,}"` are treated like `"a*"`
 * You can use these escape sequences in an expression:
 	- '\.' : literal '.'
 	- '\*' : literal '*'
@@ -189,11 +186,11 @@ The syntax has the following features:
 	- '\s' : space, equivalent to [ \r\n\t]
 	- '\w' : 'word' character, equivalent to [a-zA-Z0-9_]
 	- '\x' : hex character, equivalent to [0-9a-fA-F]
-* "[...]" are used to match sets of characters, for example "[abc]" is 
-	equivalent to "(:a|b|c)" (although the internal implementation is 
-	different; "[abc]" should be preferred because it is less expensive)
-* You can use the '-' operator within sets to display ranges of characters,
-	for example "[0-9]" is equivalent to "[0123456789]"
+* `"[...]"` are used to match sets of characters, for example `"[abc]"` is 
+	equivalent to `"(:a|b|c)"` (although the internal implementation is 
+	different; `"[abc]"` should be preferred because it is less expensive)
+* You can use the `'-'` operator within sets to display ranges of characters,
+	for example `"[0-9]"` is equivalent to `"[0123456789]"`
 * You can use these escape sequences within sets:
 	- '\-' : literal '-'
 	- '\^' : literal '^'
@@ -206,20 +203,19 @@ The syntax has the following features:
 	- '\s' : space, equivalent to ' \r\n\t'
 	- '\w' : 'word' character, equivalent to 'a-zA-Z0-9_'
 	- '\x' : hex character, equivalent to '0-9a-fA-F'
-* '<' matches the beginning of a word
-* '>' matches the ending of a word
-* '\b' works like both a '<' and a '>': "\babc\b" is equivalent to "<abc>"
-* Everything after '\i' will be case-insensitive, and everything after '\I'
-	will be case-sensitive, so that "\iabc\Iabc" will match "abcabc", 
-	"ABCabc", "Abcabc" etc. but not "abcABC". It is case-sensitive by 
+* `'<'` matches the beginning of a word
+* `'>'` matches the ending of a word
+* `'\b'` works like both a `'<'` and a `'>'`: `"\babc\b"` is equivalent to `"<abc>"`
+* Everything after `'\i'` will be case-insensitive, and everything after `'\I'`
+	will be case-sensitive, so that `"\iabc\Iabc"` will match `"abcabc"`, 
+	`"ABCabc"`, `"Abcabc"` etc. but not `"abcABC"`. It is case-sensitive by 
 	default.
-* Back references can also be case-insensitive: "([abc]{3})-\i\0" will match 
-	"abc-ABC" (but not "aBc-ABC" because the first "[abc]{3}" is case-
+* Back references can also be case-insensitive: `"([abc]{3})-\i\0"` will match 
+	`"abc-ABC"` (but not `"aBc-ABC"` because the first `"[abc]{3}"` is case-
 	sensitive)
 	
 (The syntax can be obtained from the comments in `wrx_comp.c` by typing 
-	$ grep "\*\\$" wrx_comp.c
-in the MSYS command prompt)
+	`$ grep "\*\\$" wrx_comp.c` in the shell)
 		
 ## Configuration
 
@@ -305,7 +301,7 @@ another function that can choose between wrx_exec() and `wrx_thom()` depending o
 whether or not the expression uses back references.
 
 Apparently Rob Pike implemented such a scheme in his SAM text editor. I've 
-looked at some of the SAM code but I don't yet understand how it implements  
+looked at some of the SAM code but I don't yet understand how it implements
 the sub-match extraction (not that I looked that hard).
 
 Ville Laurikari, the author of the TRE regular expression engine 
