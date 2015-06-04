@@ -3,9 +3,9 @@
  *
  *	This is my regular expression engine implementation. It supports a fairly
  *	large language, with curly braces, anchors, sub-match extraction, back
- *	references and lazy (non-greedy) evaluation. 
+ *	references and lazy (non-greedy) evaluation.
  *
- *	These documents describe the API used for embedding WRegex into an 
+ *	These documents describe the API used for embedding WRegex into an
  *	application. Please refer to the @ref notes for a more detailed
  *	description of the other aspects of \b Wregex.
  *
@@ -34,7 +34,7 @@
 
 /** \page license
  *
- * Copyright (c) 2007 Werner Stoop
+ * Copyright (c) 2007-2015 Werner Stoop
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -172,7 +172,7 @@ const char *wrx_err(int code);
 
 /**
  *	\page notes
- *	These notes describe the regex language used by WRegex and some details 
+ *	These notes describe the regex language used by WRegex and some details
  *	about the implementation.
  *
  *	They are generated from the \c notes.txt file included in the source.

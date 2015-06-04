@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2007 Werner Stoop
- * 
+ *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
  * files (the "Software"), to deal in the Software without
@@ -9,10 +9,10 @@
  * copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following
  * conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
  * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -20,9 +20,9 @@
  * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
- * OTHER DEALINGS IN THE SOFTWARE. 
+ * OTHER DEALINGS IN THE SOFTWARE.
  */
- 
+
 #include <stdio.h>
 #include <assert.h> /* Remember the -DNDEBUG for release build */
 
@@ -32,10 +32,8 @@
 /*
  *	Returns a mnemonic for the specific opcode (wrx_nfa_state's op member)
  */
-static const char *mnemonic(char op)
-{
-	switch(op)
-	{
+static const char *mnemonic(char op) {
+	switch(op) {
 		case MTC: return "MTC";
 		case MCI: return "MCI";
 		case MOV: return "MOV";
@@ -60,22 +58,19 @@ static const char *mnemonic(char op)
  *	Prints the states in the NFA.
  *	For my own development and debugging purposes.
  */
-void wrx_print_nfa(wrx_nfa *nfa)
-{
+void wrx_print_nfa(wrx_nfa *nfa) {
 	short i, j;
 	printf("start: %d; stop: %d\n", nfa->start, nfa->stop);
-	for(i = 0; i < nfa->ns; i++)
-	{
+	for(i = 0; i < nfa->ns; i++) {
 #ifdef OPTIMIZE
 		if(nfa->states[i].op == MOV) continue;
 #endif
 
 		printf("%2d ", i);
-		
+
 		printf("%s ", mnemonic(nfa->states[i].op));
-		
-		if(nfa->states[i].op == MTC || nfa->states[i].op == MCI)
-		{
+
+		if(nfa->states[i].op == MTC || nfa->states[i].op == MCI) {
 			if(nfa->states[i].data.c == '\n')
 				printf(" \\n ");
 			else if(nfa->states[i].data.c == '\r')
@@ -84,12 +79,10 @@ void wrx_print_nfa(wrx_nfa *nfa)
 				printf(" \\t ");
 			else
 				printf("'%c' ", nfa->states[i].data.c);
-		} 
-		else if(nfa->states[i].op == SET)
-		{
+		} else if(nfa->states[i].op == SET) {
 			printf("[");
 			assert(nfa->states[i].data.bv);
-			
+
 			/* These three are handled separately */
 			if(BV_TST(nfa->states[i].data.bv, '\r'))
 				printf("\\r");
@@ -97,27 +90,22 @@ void wrx_print_nfa(wrx_nfa *nfa)
 				printf("\\n");
 			if(BV_TST(nfa->states[i].data.bv, '\t'))
 				printf("\\t");
-					
-			/* Now print all the othe characters in the bit vector */	
+
+			/* Now print all the othe characters in the bit vector */
 			for(j = START_OF_PRINT; j < 127; j++)
 				if(BV_TST(nfa->states[i].data.bv, j))
 					printf("%c", j);
-					
+
 			printf("] ");
-		}
-		else if(nfa->states[i].op == REC || nfa->states[i].op == STP || nfa->states[i].op == BRF)
-		{
+		} else if(nfa->states[i].op == REC || nfa->states[i].op == STP || nfa->states[i].op == BRF) {
 			printf("<%d> ", nfa->states[i].data.idx);
 		}
 
-		if(nfa->states[i].s[0] >= 0)
-		{
+		if(nfa->states[i].s[0] >= 0) {
 			printf("%2d ", nfa->states[i].s[0]);
 			if(nfa->states[i].s[1] >= 0)
 				printf("%2d ", nfa->states[i].s[1]);
-		}
-		else
-		{
+		} else {
 			assert(nfa->states[i].s[1] < 0);
 			assert(nfa->stop == i);
 		}
@@ -148,22 +136,18 @@ void wrx_print_dot(wrx_nfa *nfa, const char *filename)
 	fprintf(f, "  start -> state%03d;\n", nfa->start);
 	fprintf(f, "  state%03d -> stop;\n", nfa->stop);
 
-	for(i = 0; i < nfa->ns; i++)
-	{
+	for(i = 0; i < nfa->ns; i++) {
 		if(nfa->states[i].op == MOV) continue;
 
-		if(nfa->states[i].op == SET)
-		{
+		if(nfa->states[i].op == SET) {
 			fprintf(f, "  state%03d [label=\"", i);
 			assert(nfa->states[i].data.bv);
-			for(j = START_OF_PRINT; j < 127; j++)
-			{
+			for(j = START_OF_PRINT; j < 127; j++) {
 				if(BV_TST(nfa->states[i].data.bv, j))
 					fprintf(f, "%c", j);
 			}
 			fprintf(f, "\"];\n");
-		}
-		else if(nfa->states[i].op == REC)
+		} else if(nfa->states[i].op == REC)
 			fprintf(f, "  state%03d [label=\"%d\",shape=triangle];\n", i, nfa->states[i].data.idx);
 		else if(nfa->states[i].op == STP)
 			fprintf(f, "  state%03d [label=\"%d\",shape=invtriangle];\n", i, nfa->states[i].data.idx);

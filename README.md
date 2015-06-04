@@ -3,14 +3,18 @@
 
 ## Introduction
 
-This is my Regex engine implementation. It supports a fairly large language, 
-with curly braces, anchors, sub-match extraction, back references and lazy 
-(non-greedy) evaluation. It was written to to form the regular expression 
-library of a scripting language I was writing. 
+*Many years ago I wrote my own Regex engine implementation.*
+
+It supports a fairly large language, with curly braces, anchors, sub-match 
+extraction, back references and lazy (non-greedy) evaluation. It was written 
+to form the regular expression library of a scripting language I was writing. 
 
 Although I've consulted several sources and looked at the sources of a couple of
 implementations (See my references below), this implementation is entirely my 
 own.
+
+It is released under the terms of the MIT license. See the bottom of this file
+for details.
 
 Just a small disclaimer: 
 
@@ -26,7 +30,7 @@ Just a small disclaimer:
 Like most regular expression engines, WRegex first requires that the regular 
 expression first be compiled to a NFA-like data structure (`wrx_nfa` defined in 
 `wregex.h`). The compilation happens in the function `wrx_comp()` which takes a
-string (char*) argument containing the expression, and returns the compiled NFA 
+string (`char*`) argument containing the expression, and returns the compiled NFA 
 structure (its two other parameters are pointers to integers for reporting 
 errors).
 
@@ -255,11 +259,11 @@ using '\' as an escape character)
 ## My TODO and pitfalls list:
 
 Like all backtracking expression engines, WRegex is susceptible to problems:
-* The expression "(:a*)*b" cannot match "aaaaab" and will cause a runtime error.
-	In general expressions such as this where there's a '*' on both sides of the
-	')' should be avoided, or one should use lazy operators '*?' and '+?' as in
-	"(:a*)*?b" which will work.
-* The expression "(:x+x+)+y" will have no trouble matching the string "xxxxxxy",
+* The expression `"(:a*)*b"` cannot match "aaaaab" and will cause a runtime error.
+	In general expressions such as this where there's a `'*'` on both sides of the
+	')' should be avoided, or one should use lazy operators `'*?'` and `'+?'` as in
+	`"(:a*)*?b"` which will work.
+* The expression `"(:x+x+)+y"` will have no trouble matching the string "xxxxxxy",
 	but it will run into trouble when detecting that "xxxxxx" is not a match. In
 	this case the performance will degrade exponentially with each additional 
 	'x'. Once again the problem relates to having a '+' on both sides of the ')'
@@ -379,3 +383,29 @@ In implementing this Regex pattern matcher,  I consulted these sources:
 	Some people, when confronted with a problem, think "I know, I'll use regular 
 	expressions." Now they have two problems.
 		- Jamie Zawinski
+
+## License
+
+	Copyright (c) 2007-2015 Werner Stoop
+
+	Permission is hereby granted, free of charge, to any person
+	obtaining a copy of this software and associated documentation
+	files (the "Software"), to deal in the Software without
+	restriction, including without limitation the rights to use,
+	copy, modify, merge, publish, distribute, sublicense, and/or sell
+	copies of the Software, and to permit persons to whom the
+	Software is furnished to do so, subject to the following
+	conditions:
+
+	The above copyright notice and this permission notice shall be
+	included in all copies or substantial portions of the Software.
+
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+	EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+	OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+	NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+	HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+	WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+	FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+	OTHER DEALINGS IN THE SOFTWARE.
+  

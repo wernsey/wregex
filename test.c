@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2007 Werner Stoop
- * 
+ * Copyright (c) 2007-2015 Werner Stoop
+ *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
  * files (the "Software"), to deal in the Software without
@@ -9,10 +9,10 @@
  * copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following
  * conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
  * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -20,9 +20,9 @@
  * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
- * OTHER DEALINGS IN THE SOFTWARE. 
+ * OTHER DEALINGS IN THE SOFTWARE.
  */
- 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -30,24 +30,20 @@
 #include "wregex.h"
 #include "wrx_prnt.h"
 
-int match(char *p, char *s)
-{
+int match(char *p, char *s) {
 	int e, ep;
 	wrx_nfa *r;
 	wrx_subm *subm;
 
 	r = wrx_comp(p, &e, &ep);
-	if(!r)
-	{
+	if(!r) {
 		fprintf(stderr, "\nError: %d\n%s\n%*c: %s\n", e, p, ep, '^', wrx_err(e));
 		exit(EXIT_FAILURE);
 	}
 
-	if(r->n_subm > 0)
-	{
+	if(r->n_subm > 0) {
 		subm = calloc(sizeof *subm, r->n_subm);
-		if(!subm)
-		{
+		if(!subm) {
 			fprintf(stderr, "Error: out of memory (submatches)\n");
 			wrx_free_nfa(r);
 			exit(EXIT_FAILURE);
@@ -95,8 +91,7 @@ int match(char *p, char *s)
 					}\
 					} while(0)
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
 	int i, e, ep, len, nsm;
 
 	int total = 0, success = 0;
@@ -106,19 +101,18 @@ int main(int argc, char *argv[])
 	wrx_subm *subm;
 
 	char *buf;
-		
-	if(argc < 2)
-	{
+
+	if(argc < 2) {
 		/* Run unit tests */
 		MATCH("def", "abcdefghi");
 		NOMATCH("def", "abcdfghi");
 
 		/* Match only at start of line */
-		MATCH("^abc", "abcdef");		 
+		MATCH("^abc", "abcdef");
 		MATCH("^abc", "\rabcdef");
 		MATCH("^abc", "\nabcdef");
 		MATCH("^def", "abc\ndef\nghi");
-		MATCH("^ghi", "abc\ndef\rghi");				
+		MATCH("^ghi", "abc\ndef\rghi");
 		NOMATCH("^def", "abcdef");
 		NOMATCH("^def", "ab\ncdef\nghi");
 		NOMATCH("^ghi", "abc\ndefg\rhi");
@@ -143,7 +137,7 @@ int main(int argc, char *argv[])
 		MATCH("ab?c", "abc");
 		MATCH("ab?c", "ac");
 		NOMATCH("ab?c", "abbc");
-		
+
 		/* Match either "ab", "cd" or "ef"  */
 		MATCH("ab|cd|ef", "abc");
 		MATCH("ab|cd|ef", "acd");
@@ -173,7 +167,7 @@ int main(int argc, char *argv[])
 		MATCH("ab{2,4}c", "abbc");
 		MATCH("ab{2,4}c", "abbbc");
 		MATCH("ab{2,4}c", "abbbbc");
-		NOMATCH("ab{2,4}c", "abbbbbc");		
+		NOMATCH("ab{2,4}c", "abbbbbc");
 
 		/* Character sets */
 		MATCH("[abc]{3}", "abc");
@@ -188,10 +182,10 @@ int main(int argc, char *argv[])
 		MATCH("[^abc]{3}", "def");
 		MATCH("[^a-c]{3}", "def");
 		MATCH("[\\^ac]{3}", "ac^");
-		NOMATCH("[\\^ac]{3}", "abc");	
+		NOMATCH("[\\^ac]{3}", "abc");
 		MATCH("[\\]ac]{3}", "ac]");
 		NOMATCH("[\\]ac]{3}", "abc");
-		MATCH("[\\r\\n\\t]{3}", "\r\n\t");		
+		MATCH("[\\r\\n\\t]{3}", "\r\n\t");
 		MATCH("[\r\n\t]{3}", "\r\n\t");
 		MATCH("[\\d]{3}", "123");
 		NOMATCH("[\\d]{3}", "abc");
@@ -205,13 +199,13 @@ int main(int argc, char *argv[])
 		NOMATCH("[\\w]{4}", "aA0*");
 		MATCH("[\\x]{4}", "a0B9");
 		NOMATCH("[\\x]{4}", "a0z9");
-		
+
 		/* Case insensitive tests */
 		MATCH("\\iabc\\Iabc", "abcabc");
-		MATCH("\\iabc\\Iabc", "AbCabc");	
-		NOMATCH("\\iabc\\Iabc", "defAbc");	
+		MATCH("\\iabc\\Iabc", "AbCabc");
+		NOMATCH("\\iabc\\Iabc", "defAbc");
 		NOMATCH("\\iabc\\Iabc", "AbCAbc");
-		
+
 		MATCH("\\i[a-c]{3}\\I[a-c]{3}", "abcabc");
 		MATCH("\\i[a-c]{3}\\I[a-c]{3}", "AbCabc");
 		NOMATCH("\\i[a-c]{3}\\I[a-c]{3}", "AbCAbC");
@@ -219,7 +213,7 @@ int main(int argc, char *argv[])
 		MATCH("\\i[^a-c]{3}\\I[a-c]{3}", "dEfabc");
 		NOMATCH("\\i[^a-c]{3}\\I[a-c]{3}", "abcabc");
 		NOMATCH("\\i[^a-c]{3}\\I[a-c]{3}", "ABCabc");
-		
+
 		MATCH("\\i\\I", "abc");
 		NOMATCH("^\\i\\I$", "abc");
 		MATCH("^\\i\\I$", "");
@@ -229,13 +223,13 @@ int main(int argc, char *argv[])
 		NOMATCH("(abc) \\1", "abc bbc");
 		MATCH("((abc) \\2)-\\1", "abc abc-abc abc");
 		NOMATCH("((abc) \\2)-\\1", "abc-abc abc abc");
-		
+
 		MATCH("([abc]{3})-\\i\\1", "abc-abc");
 		MATCH("([abc]{3})-\\i\\1", "abc-ABC");
 		NOMATCH("([abc]{3})-\\i\\1", "aBc-AbC");
 		MATCH("([abcABC]{3})-\\i\\1", "aBc-AbC");
 		MATCH("\\i([abc]{3})-\\1", "aBc-AbC");
-		
+
 		/* Escape sequences */
 		MATCH("\\.", ".");
 		NOMATCH("\\.", "a");
@@ -274,7 +268,7 @@ int main(int argc, char *argv[])
 		MATCH("\\n", "\n");
 		NOMATCH("\\n", "a");
 		MATCH("\\t", "\t");
-		NOMATCH("\\t", "a");		
+		NOMATCH("\\t", "a");
 		MATCH("\r", "\r");
 		NOMATCH("\r", "a");
 		MATCH("\n", "\n");
@@ -283,7 +277,7 @@ int main(int argc, char *argv[])
 		NOMATCH("\t", "a");
 		MATCH("\\d{3}", "123");
 		NOMATCH("\\d{3}", "abc");
-		NOMATCH("\\d{3}", "ABC");		
+		NOMATCH("\\d{3}", "ABC");
 		NOMATCH("\\d{3}", "@#$");
 		MATCH("\\a{3}", "abc");
 		NOMATCH("\\a{3}", "123");
@@ -300,7 +294,7 @@ int main(int argc, char *argv[])
 		NOMATCH("\\w{4}", "@#$%");
 		MATCH("\\x{4}", "09aF");
 		NOMATCH("\\x{4}", "123Z");
-		
+
 		/* Match beginning of word */
 		MATCH("<abc", "abcdef");
 		MATCH("<abc", "def abcdef");
@@ -309,15 +303,15 @@ int main(int argc, char *argv[])
 		/* Match ending of word */
 		MATCH("abc>", "abc def");
 		MATCH("abc>", "def abc");
-		NOMATCH("abc>", "abcdef");	
-		
+		NOMATCH("abc>", "abcdef");
+
 		/* Match boundaries */
 		MATCH("\\babc\\b", "abc");
 		MATCH("\\babc\\b", "def abc");
 		MATCH("\\babc\\b", "abc def");
 		NOMATCH("\\babc\\b", "defabc");
-		NOMATCH("\\babc\\b", "abcdef");		
-		
+		NOMATCH("\\babc\\b", "abcdef");
+
 		/* Tests for whitespace */
 		MATCH("a {4}b", "a    b");
 		MATCH("a\t{4}b", "a\t\t\t\tb");
@@ -326,33 +320,33 @@ int main(int argc, char *argv[])
 		NOMATCH("a\t{4}b", "a\t\t\tb");
 		NOMATCH("a\\t{4}b", "a\t\t\tb");
 		MATCH("a\\s{4}b", "a \r\n\tb");
-		
+
 		/* These tests are to check that previously fixed bugs don't reoccur */
-		
-		/* There was a bug with how the [abc] was pushed to the stack following 
+
+		/* There was a bug with how the [abc] was pushed to the stack following
 		a '^' anchor, which caused an assertion to fail */
-		MATCH("^[abc]", "aef"); 
-		
+		MATCH("^[abc]", "aef");
+
 		/* These are all special in their own way: */
 		MATCH("", "");    /* "" should match everything */
-		MATCH("", "abc"); 
-		MATCH("^", "");	  /* "^" should match everything */ 
-		MATCH("^", "abc"); 
-		MATCH("$", "");	  /* "$" should match everything */ 
-		MATCH("$", "abc"); 
-		MATCH("^$", "");	  /* "^$" should match only an empty line */ 
-		
+		MATCH("", "abc");
+		MATCH("^", "");	  /* "^" should match everything */
+		MATCH("^", "abc");
+		MATCH("$", "");	  /* "$" should match everything */
+		MATCH("$", "abc");
+		MATCH("^$", "");	  /* "^$" should match only an empty line */
+
 		/* "^$" should match between the two '\n's in "abc\n\ndef" */
-		MATCH("^$", "abc\n\ndef"); 		
+		MATCH("^$", "abc\n\ndef");
 		NOMATCH("^$", "abc\ndef"); /* but not here */
-		
-		NOMATCH("^$", "abc"); 
-		
+
+		NOMATCH("^$", "abc");
+
 		printf("\n______________\nSuccess: %d/%d\n", success, total);
-		
+
 		if(success != total)
 			fprintf(stderr, "Some tests failed!\n");
-			
+
 		return 0;
 	}
 
@@ -363,27 +357,23 @@ int main(int argc, char *argv[])
 	if(argc > 2) str = argv[2];
 
 	r = wrx_comp(pat, &e, &ep);
-	if(r)
-	{
+	if(r) {
 		printf("\n---------------\n");
 		wrx_print_nfa(r);
 		printf("---------------\n");
 
-		if(str)
-		{
+		if(str) {
 			/*
 			 *	Allocate memory for the submatches
 			 */
 #if 0		/* This tests that nsm could be less than r->n_subm */
-			nsm = r->n_subm / 2; 
-#else		/* This will allocate enough memory for all submatches */			
+			nsm = r->n_subm / 2;
+#else		/* This will allocate enough memory for all submatches */
 			nsm = r->n_subm;
-#endif			
-			if(nsm > 0)
-			{
+#endif
+			if(nsm > 0) {
 				subm = calloc(sizeof *subm, nsm);
-				if(!subm)
-				{
+				if(!subm) {
 					fprintf(stderr, "Error: out of memory (submatches)");
 					wrx_free_nfa(r);
 					return 1;
@@ -399,27 +389,23 @@ int main(int argc, char *argv[])
 			printf("wrx_exec() returned %d\n", e);
 
 			/* If successful, print all the submatches */
-			if(e == 1)
-			{
+			if(e == 1) {
 				printf("Match!\n");
 				for(i = 0; i < nsm; i++)
-					if(subm[i].beg && subm[i].end)
-					{
+					if(subm[i].beg && subm[i].end) {
 						len = subm[i].end - subm[i].beg;
-						buf = malloc(len + 1);						
-						if(!buf)
-						{
+						buf = malloc(len + 1);
+						if(!buf) {
 							fprintf(stderr, "Error: Out of memory\n");
-							return 1;		
+							return 1;
 						}
-										
-						strncpy(buf, subm[i].beg, len);						
+
+						strncpy(buf, subm[i].beg, len);
 						buf[len] = '\0';
 						printf("subm[%d] = \"%s\"\n", i, buf);
 						free(buf);
 					}
-			}
-			else if(e == 0)
+			} else if(e == 0)
 				printf("No match\n");
 			else
 				printf("Error in match: %s\n",  wrx_err(e));
@@ -434,9 +420,7 @@ int main(int argc, char *argv[])
 		wrx_print_dot(r, "nfa.dot");
 
 		wrx_free_nfa(r);
-	}
-	else
-	{
+	} else {
 		fprintf(stderr, "\nError: %d\n%s\n%*c: %s", e, pat, ep, '^', wrx_err(e));
 		return 1;
 	}

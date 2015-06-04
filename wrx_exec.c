@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Werner Stoop
+ * Copyright (c) 2007-2015 Werner Stoop
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -44,8 +44,7 @@ typedef enum {
 } stack_op;
 
 /* Element on the stack */
-typedef struct
-{
+typedef struct {
 	/* Operation associated with this stack element */
 	stack_op op;
 
@@ -56,8 +55,7 @@ typedef struct
 	short st;
 } stack_el;
 
-typedef struct
-{
+typedef struct {
 	stack_el *els;	/* Elements on the stack */
 	short ns;	 	/* Number of elements on the stack */
 	short ts;		/* Top of stack */
@@ -68,15 +66,13 @@ typedef struct
  *	In theory the number of elements required should not exceed the number
  *	of states
  */
-static stack *stack_create(int ns)
-{
+static stack *stack_create(int ns) {
 	stack *st;
 	st = malloc(sizeof *st);
 	if(!st) return NULL;
 
 	st->els = calloc(ns, sizeof *st->els);
-	if(!st->els)
-	{
+	if(!st->els) {
 		free(st);
 		return NULL;
 	}
@@ -90,8 +86,7 @@ static stack *stack_create(int ns)
 /*
  *	Frees memory allocated to a stack
  */
-static void free_stack(stack *stk)
-{
+static void free_stack(stack *stk) {
 	assert(stk);
 
 	free(stk->els);
@@ -101,10 +96,8 @@ static void free_stack(stack *stk)
 /*
  *	Pushes an operation on a stack
  */
-static int push(stack *stk, stack_op op, const char *opr, short state)
-{
-	if(stk->ts + 1 >= stk->ns)
-	{
+static int push(stack *stk, stack_op op, const char *opr, short state) {
+	if(stk->ts + 1 >= stk->ns) {
 		/* Stack overflow: Double its size */
 		if(stk->ns < 0x3FFF)
 			stk->ns <<= 1;
@@ -130,8 +123,7 @@ static int push(stack *stk, stack_op op, const char *opr, short state)
 /*
  *	Pops an operation from a stack
  */
-static stack_el* pop(stack *stk)
-{
+static stack_el* pop(stack *stk) {
 	if(--stk->ts < 0) return NULL;
 	return &stk->els[stk->ts];
 }
@@ -139,8 +131,7 @@ static stack_el* pop(stack *stk)
 /*
  * Matches the string str to the NFA nfa, and stores the submatches in subm[]
  */
-int wrx_exec(const wrx_nfa *nfa, const char *str, wrx_subm subm[], int nsm)
-{
+int wrx_exec(const wrx_nfa *nfa, const char *str, wrx_subm subm[], int nsm) {
 	short st; 			/* current state */
 	wrx_nfa_state *sp;	/* state pointer */
 
@@ -177,24 +168,21 @@ int wrx_exec(const wrx_nfa *nfa, const char *str, wrx_subm subm[], int nsm)
 	if(!stk) return WRX_MEMORY;
 	s = str;
 
-	if(nsm < nfa->n_subm)
-	{
+	if(nsm < nfa->n_subm) {
 		spare_sm = calloc(nfa->n_subm - nsm, sizeof *spare_sm);
-		if(!spare_sm)
-		{
+		if(!spare_sm) {
 			free_stack(stk);
 			return WRX_MEMORY;
 		}
 	}
 
-	for(i = 0; i < nsm; i++)
-	{
+	for(i = 0; i < nsm; i++) {
 		subm[i].beg = NULL;
 		subm[i].end = NULL;
 	}
 	
-	if((rv = setjmp(ex)) != 0) /* Exception handling: Error or Match */
-	{		
+	if((rv = setjmp(ex)) != 0) { 
+		/* Exception handling: Error or Match */
 		free_stack(stk);
 		free(spare_sm);
 		return rv;
@@ -207,16 +195,13 @@ int wrx_exec(const wrx_nfa *nfa, const char *str, wrx_subm subm[], int nsm)
 		THROW(p?WRX_STACK:WRX_MEMORY);
 
 	/** Execute **/
-	while((sl = pop(stk)) != NULL)
-	{
-		if(sl->op == op_rbeg)
-		{
+	while((sl = pop(stk)) != NULL) {
+		if(sl->op == op_rbeg) {
 			assert(sl->st < nfa->n_subm);
 
 			if(sl->st < nsm)
 				subm[sl->st].beg = sl->opr;
-			else
-			{
+			else {
 				assert(spare_sm);
 				spare_sm[sl->st - nsm].beg = sl->opr;
 			}
@@ -225,15 +210,12 @@ int wrx_exec(const wrx_nfa *nfa, const char *str, wrx_subm subm[], int nsm)
 			printf("popped subm[%d].beg\n", sl->st);
 #endif
 			continue; /* Pop the next character */
-		}
-		else if(sl->op == op_rend)
-		{
+		} else if(sl->op == op_rend) {
 			assert(sl->st < nfa->n_subm);
 
 			if(sl->st < nsm)
 				subm[sl->st].end = sl->opr;
-			else
-			{
+			else {
 				assert(spare_sm);
 				spare_sm[sl->st - nsm].end = sl->opr;
 			}
@@ -257,8 +239,7 @@ int wrx_exec(const wrx_nfa *nfa, const char *str, wrx_subm subm[], int nsm)
 		else
 			printf(": %d\n", sp->op);
 #endif
-		do
-		{
+		do {
 			cont = 0;
 			switch(sp->op)
 			{
@@ -295,8 +276,7 @@ int wrx_exec(const wrx_nfa *nfa, const char *str, wrx_subm subm[], int nsm)
 #ifdef DEBUG_OUTPUT
 				printf("SET @ %d ('%c')\n", st, cp[0]);
 #endif
-				if(BV_TST(sp->data.bv, cp[0]))
-				{
+				if(BV_TST(sp->data.bv, cp[0])) {
 					cont = 1;
 					/* get the next character in the input string */
 					cp++;
@@ -364,8 +344,7 @@ int wrx_exec(const wrx_nfa *nfa, const char *str, wrx_subm subm[], int nsm)
 					THROW(WRX_INV_BREF);
 				
 				for(cont = 1, b = sm->beg; b < sm->end; b++, cp++)
-					if(b[0] != cp[0])
-					{
+					if(b[0] != cp[0]) {
 						cont = 0;
 						break;
 					}
@@ -390,8 +369,7 @@ int wrx_exec(const wrx_nfa *nfa, const char *str, wrx_subm subm[], int nsm)
 					THROW(WRX_INV_BREF);
 				
 				for(cont = 1, b = sm->beg; b < sm->end; b++, cp++)
-					if(tolower(b[0]) != tolower(cp[0]))
-					{
+					if(tolower(b[0]) != tolower(cp[0])) {
 						cont = 0;
 						break;
 					}		
@@ -405,8 +383,7 @@ int wrx_exec(const wrx_nfa *nfa, const char *str, wrx_subm subm[], int nsm)
 				bol = 1;
 				if(cp == str)
 					cont = 1;
-				else
-				{
+				else {
 					assert(cp > str);
 					if(cp[-1] == '\r' || cp[-1] == '\n')
 						cont = 1;
@@ -425,13 +402,10 @@ int wrx_exec(const wrx_nfa *nfa, const char *str, wrx_subm subm[], int nsm)
 #ifdef DEBUG_OUTPUT
 				printf("BOW @ %d\n", st);
 #endif
-				if(cp == str)
-				{
+				if(cp == str) {
 					if(isalnum(cp[0]))
 						cont = 1; /* first char in string */
-				}
-				else
-				{
+				} else {
 					assert(cp > str);
 					if(isalnum(cp[0]) && !isalnum(cp[-1]))
 						cont = 1;
@@ -451,13 +425,10 @@ int wrx_exec(const wrx_nfa *nfa, const char *str, wrx_subm subm[], int nsm)
 #ifdef DEBUG_OUTPUT
 				printf("BND @ %d\n", st);
 #endif
-				if(cp == str)
-				{
+				if(cp == str) {
 					if(isalnum(cp[0]))
 						cont = 1; /* first char in string */
-				}
-				else
-				{
+				} else {
 					assert(cp > str);
 					if(isalnum(cp[0]) ^ isalnum(cp[-1]))
 						cont = 1;
@@ -471,8 +442,7 @@ int wrx_exec(const wrx_nfa *nfa, const char *str, wrx_subm subm[], int nsm)
 #ifdef DEBUG_OUTPUT
 				printf("MTC %c ?= %c @ %d\n", cp[0], sp->data.c, st);
 #endif
-				if(cp[0] == sp->data.c)
-				{
+				if(cp[0] == sp->data.c) {
 					cont = 1;
 					/* get the next character in the input string */
 					cp++;
@@ -483,8 +453,7 @@ int wrx_exec(const wrx_nfa *nfa, const char *str, wrx_subm subm[], int nsm)
 #ifdef DEBUG_OUTPUT
 				printf("MCI %c ?= %c @ %d\n", cp[0], sp->data.c, st);
 #endif
-				if(tolower(cp[0]) == tolower(sp->data.c))
-				{
+				if(tolower(cp[0]) == tolower(sp->data.c)) {
 					cont = 1;
 					/* get the next character in the input string */
 					cp++;
@@ -494,8 +463,7 @@ int wrx_exec(const wrx_nfa *nfa, const char *str, wrx_subm subm[], int nsm)
 			} /* switch sp->op */
 
 			/* Continue along this path? */
-			if(cont)
-			{
+			if(cont) {
 				/* move to the next state */
 				st = sp->s[0];
 #ifdef DEBUG_OUTPUT
@@ -522,16 +490,12 @@ int wrx_exec(const wrx_nfa *nfa, const char *str, wrx_subm subm[], int nsm)
 #ifdef DEBUG_OUTPUT
 			printf("bol %d; ctr %d; s[1] %d\n", bol, ctr, s[1]);
 #endif
-			if(bol)
-			{
+			if(bol) {
 				/* We have an '^' anchor, push every character that follows
 				a newline to the stack */
-				if(bol == 1 && ctr == 0)
-				{
-					while(s[0])
-					{
-						if((s[0] == '\r' || s[0] == '\n') && s[1])
-						{
+				if(bol == 1 && ctr == 0) {
+					while(s[0]) {
+						if((s[0] == '\r' || s[0] == '\n') && s[1]) {
 #ifdef DEBUG_OUTPUT
 							printf("pushing '%c' start\n", s[1]);
 #endif
@@ -544,9 +508,7 @@ int wrx_exec(const wrx_nfa *nfa, const char *str, wrx_subm subm[], int nsm)
 
 					bol++;
 				}
-			}
-			else if(ctr == 0 && s[1])
-			{
+			} else if(ctr == 0 && s[1]) {
 #ifdef DEBUG_OUTPUT
 				printf("pushing '%c' start\n", s[1]);
 #endif
@@ -554,8 +516,7 @@ int wrx_exec(const wrx_nfa *nfa, const char *str, wrx_subm subm[], int nsm)
 				if(p == 0 || p == -1)
 					THROW(p?WRX_STACK:WRX_MEMORY);
 			}
-		}
-		while(cont);
+		} while(cont);
 	}
 
 	/* Error or No match */

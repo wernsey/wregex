@@ -3,7 +3,7 @@
 #include <string.h>
 
 /* for getopt() and path functions - non-portable */
-#include <unistd.h> 
+#include <unistd.h>
 
 #include "wregex.h"
 
@@ -14,8 +14,7 @@
 /*
  *  Prints the usage of the program
  */
-void usage(char *s)
-{
+void usage(char *s) {
     printf("Usage:\n  %s [options] pattern [infile]\n", s);
     printf("where the following options are allowed:\n");
     printf("  -o outfilename   - Specify output file\n");
@@ -28,69 +27,56 @@ void usage(char *s)
  *  "greps" a file by matching each line in infile to the wrx_nfa, writes
  *	the results to outfile.
  */
-void grep(wrx_nfa *r, FILE *infile, FILE *outfile, int flags)
-{
+void grep(wrx_nfa *r, FILE *infile, FILE *outfile, int flags) {
     char buffer[256], *sm;
     wrx_subm *subm;
     int e, i, len;
 
     /* Allocate enough memory for all the submatches in the wrx_nfa */
-    if(r->n_subm > 0)
-    {
+    if(r->n_subm > 0) {
 	    subm = calloc(sizeof *subm, r->n_subm);
-	    if(!subm)
-	    {
+	    if(!subm) {
 	        fprintf(stderr, "Error: out of memory");
 	        wrx_free_nfa(r);
 	        exit(EXIT_FAILURE);
 	    }
-	}
-	else 
+	} else
 		subm = NULL;
 
     /* For each line in the file */
-    while(!feof(infile))
-    {
+    while(!feof(infile)) {
         /* Read the line */
-        if(fgets(buffer, sizeof buffer, infile) == buffer)
-        {
+        if(fgets(buffer, sizeof buffer, infile) == buffer) {
             /* Match the line to the wrx_nfa */
             e = wrx_exec(r, buffer, subm, r->n_subm);
 
-            if(e == 1 && flags & SUBMATCHES)
-            {
+            if(e == 1 && flags & SUBMATCHES) {
 	            /* Print only the submatches */
-	            for(i = 0; i < r->n_subm; i++)
-	            {
+	            for(i = 0; i < r->n_subm; i++) {
 		            /* Get the length of the submatch */
 		            len = subm[i].end - subm[i].beg;
-		            
+
 		            /* Allocate memory for it */
 		            sm = malloc(len + 1);
-		            if(!sm) 
-		            {
+		            if(!sm) {
 			            fprintf(stderr, "Error: out of memory");
                 		exit(EXIT_FAILURE);
-		            } 
-		            
+		            }
+
 		            /* Copy it */
 		            strncpy(sm, subm[i].beg, len);
 		            sm[len] = 0;
-		            
+
 		            /* and print */
 		            printf("%s ", sm);
 		            free(sm);
 	            }
 	            printf("\n");
-            }
-            else if((!(flags & INVERT) && e == 1) || /* The line matched the pattern, or */
-                ((flags & INVERT) && e == 0))   	/* The line did not match, and we want to invert matches */
-            {	            
+            } else if((!(flags & INVERT) && e == 1) || /* The line matched the pattern, or */
+                ((flags & INVERT) && e == 0)) {  	/* The line did not match, and we want to invert matches */
                 /* print the line */
                 fputs(buffer, outfile);
-            }
-            else if(e < 0)
-            {
+            } else if(e < 0) {
                 /* A run-time error occured - print it */
                 fprintf(stderr, "Error in match: %s\n",  wrx_err(e));
                 exit(EXIT_FAILURE);
@@ -99,8 +85,7 @@ void grep(wrx_nfa *r, FILE *infile, FILE *outfile, int flags)
     }
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     FILE *infile,               /* Input file */
             *outfile = stdout;  /* Output file - defaults to the console */
     char c,
@@ -113,10 +98,8 @@ int main(int argc, char *argv[])
     wrx_nfa *r; /* Used to store the compiled regular expression */
 
     /* Parse the command line options */
-    while ((c = getopt(argc, argv, "o:vs?")) != EOF)
-    {
-      switch (c)
-        {
+    while ((c = getopt(argc, argv, "o:vs?")) != EOF) {
+      switch (c) {
         case 'o': ofn = optarg; break;
         case 'v': flags |= INVERT; break;
         case 's': flags |= SUBMATCHES; break;
@@ -124,19 +107,16 @@ int main(int argc, char *argv[])
         }
     }
 
-    if(optind >= argc)
-    {
+    if(optind >= argc) {
         /* No pattern/input file */
         usage(argv[0]);
         return 1;
     }
 
-    if(ofn)
-    {
+    if(ofn) {
         /* Open the output file */
         outfile = fopen(ofn, "w");
-        if(!outfile)
-        {
+        if(!outfile) {
             fprintf(stderr, "Error: Unable to open %s for input", ofn);
             return 1;
         }
@@ -147,24 +127,20 @@ int main(int argc, char *argv[])
 
     /* Compile the regular expression into a wrx_nfa */
     r = wrx_comp(pat, &e, &ep);
-    if(!r)
-    {
+    if(!r) {
         /* Error occured - note how we use ep to indicate the
             position of the error */
         fprintf(stderr, "Error: %d\n%s\n%*c: %s", e, pat, ep, '^', wrx_err(e));
         return 1;
     }
 
-    if(optind < argc)
-    {
+    if(optind < argc) {
         /* For each input file */
-        for (i = optind; i< argc; i++)
-        {
+        for (i = optind; i< argc; i++) {
             /* Open the input file */
             ifn = argv[i];
             infile = fopen(ifn, "r");
-            if(!infile)
-            {
+            if(!infile) {
                 fprintf(stderr, "Error: Unable to open %s for input", argv[i]);
                 wrx_free_nfa(r);
                 return 1;
@@ -175,9 +151,7 @@ int main(int argc, char *argv[])
             /* ...and close it */
             fclose(infile);
         }
-    }
-    else
-    {
+    } else {
         /* "grep" stdin */
         grep(r, stdin, outfile, flags);
     }

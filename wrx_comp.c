@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Werner Stoop
+ * Copyright (c) 2007-2015 Werner Stoop
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -46,8 +46,7 @@
  * we move upwards through the recursion.
  * This structure tracks those NFA segments' states.
  */
-typedef struct
-{
+typedef struct {
 	short 	beg,	/* The state at which this NFA segment begins */
 			end;	/* The state at which this NFA segment ends */
 	/* Also, due to the nature of the parser, all states between 'beg' and
@@ -58,8 +57,7 @@ typedef struct
 /*
  *	Internal data used while compiling the NFA
  */
-typedef struct
-{
+typedef struct {
 	wrx_nfa *nfa; /* The NFA being generated */
 
 	char *pat,	  /* The pattern being compiled */
@@ -82,19 +80,16 @@ typedef struct
  *	Gets and initializes the next available state in the wrx_nfa
  *	realloc()s the NFA's states if there aren't enough available
  */
-static short next_state(comp_data *cd)
-{
+static short next_state(comp_data *cd) {
 	short i;
 	int delta;
 
-	if(cd->nfa->ns + 1 >= cd->nfa->n_states)
-	{
+	if(cd->nfa->ns + 1 >= cd->nfa->n_states) {
 		/* We need more states. Guess the number needed from the
 			remaining characters in the input pattern */
 		delta = (DELTA_STATES * strlen(cd->p));
 
-		if(cd->nfa->n_states == 0x7FFF)
-		{
+		if(cd->nfa->n_states == 0x7FFF) {
 			/* Too many states: We use shorts to index them, and this
 			will result in overflow */
 			THROW(WRX_MANY_STATES);
@@ -127,10 +122,8 @@ static short next_state(comp_data *cd)
 /*
  *	Pushes a NFA segment on the comp_data's stack
  */
-static void push_seg(comp_data *cd, short beg, short end)
-{
-	if(cd->seg_sp + 1 >= cd->seg_s)
-	{
+static void push_seg(comp_data *cd, short beg, short end) {
+	if(cd->seg_sp + 1 >= cd->seg_s) {
 		/* Resize the stack */
 		cd->seg_s += 10;
 		cd->seg = realloc(cd->seg, sizeof(nfa_segment) * cd->seg_s);
@@ -146,8 +139,7 @@ static void push_seg(comp_data *cd, short beg, short end)
  *	Pops a NFA segment from the comp_data's stack
  *	Don't call push_seg() if you're still using the returned pointer
  */
-static nfa_segment *pop_seg(comp_data *cd)
-{
+static nfa_segment *pop_seg(comp_data *cd) {
 	assert(cd->seg_sp > 0);
 	cd->seg_sp--;
 	return &cd->seg[cd->seg_sp];
@@ -156,12 +148,10 @@ static nfa_segment *pop_seg(comp_data *cd)
 /*
  *	Has state s1 transition to s2
  */
-static void transition(comp_data *cd , short s1, short s2)
-{
+static void transition(comp_data *cd , short s1, short s2) {
 	if(cd->nfa->states[s1].s[0] < 0)
 		cd->nfa->states[s1].s[0] = s2;
-	else
-	{
+	else {
 		/* This assertion must hold because each NFA state has at most
 			2 epsilon transitions */
 		assert(cd->nfa->states[s1].s[1] < 0);
@@ -198,18 +188,14 @@ static int duplicate(comp_data *cd, short j)
 	cd->nfa->states[k].s[0] = cd->nfa->states[j].s[0];
 	cd->nfa->states[k].s[1] = cd->nfa->states[j].s[1];
 
-	if(cd->nfa->states[j].op == SET)
-	{
+	if(cd->nfa->states[j].op == SET) {
 		bv = malloc(16);
 		if(!bv) THROW(WRX_MEMORY);
 		memcpy(bv, cd->nfa->states[j].data.bv, 16);
 		cd->nfa->states[k].data.bv = bv;
-	}
-	else if(cd->nfa->states[j].op == REC || cd->nfa->states[j].op == STP || cd->nfa->states[j].op == BRF)
-	{
+	} else if(cd->nfa->states[j].op == REC || cd->nfa->states[j].op == STP || cd->nfa->states[j].op == BRF) {
 		cd->nfa->states[k].data.idx = cd->nfa->states[j].data.idx;
-	}
-	else
+	} else
 		cd->nfa->states[k].data.c = cd->nfa->states[j].data.c;
 
 	return k;
@@ -229,8 +215,7 @@ static char *create_bv(char *s)
 	if((bv = malloc(16)) == NULL) return NULL;
 	memset(bv, 0, 16);
 
-	do
-	{
+	do {
 		u = s[0];
 		if(s[1] == '-')
 		{
@@ -248,8 +233,7 @@ static char *create_bv(char *s)
 
 		for(i = u; i <= v; i++)
 			BV_SET(bv, i);
-	}
-	while(s[0] != '\0');
+	} while(s[0] != '\0');
 
 	return bv;
 }
@@ -287,25 +271,23 @@ static void pattern(comp_data *cd)
 	short b, e, bol = 0, hl = 0;
 	nfa_segment *m1, *m2;
 
-	if(cd->p[0] == '\0')
-	{
+	if(cd->p[0] == '\0') {
 #ifdef DEBUG_OUTPUT
 		printf("\"\"");
 #endif
 		/* empty pattern: Match everything */
-		b = next_state(cd); 
+		b = next_state(cd);
 		/* Initialize the states */
 		cd->nfa->states[b].op = MEV;
 		push_seg(cd, b, b);
 		return;
 	}
 
-	if(cd->p[0] == '^')
-	{
+	if(cd->p[0] == '^') {
 		bol = 1;
 
 		/* Create a BOL node */
-		b = next_state(cd); 
+		b = next_state(cd);
 		/* Initialize the states */
 		cd->nfa->states[b].op = BOL;
 		push_seg(cd, b, b);
@@ -318,14 +300,12 @@ static void pattern(comp_data *cd)
 		if(!cd->p[0]) return;
 	}
 
-	if(cd->p[0] != '$')
-	{
+	if(cd->p[0] != '$') {
 		hl = 1;
 		list(cd);
 	}
 
-	if(bol && hl)
-	{
+	if(bol && hl) {
 		/* concatenate the BOL and the list */
 		m2 = pop_seg(cd); /* pop NFA 2 */
 		m1 = pop_seg(cd); /* pop NFA 1 */
@@ -335,15 +315,13 @@ static void pattern(comp_data *cd)
 		push_seg(cd, m1->beg, m2->end);
 	}
 
-	if(cd->p[0] == '$')
-	{
+	if(cd->p[0] == '$') {
 #ifdef DEBUG_OUTPUT
 		printf(" $");
 #endif
-		if(!bol && !hl)
-		{
+		if(!bol && !hl) {
 			/* Special case: pattern = "$", match everything */
-			b = next_state(cd); 
+			b = next_state(cd);
 			/* Initialize the states */
 			cd->nfa->states[b].op = MEV;
 			push_seg(cd, b, b);
@@ -354,8 +332,8 @@ static void pattern(comp_data *cd)
 			THROW(WRX_BAD_DOLLAR);
 
 		/* Create a EOL node */
-		b = next_state(cd); 
-		e = next_state(cd); 
+		b = next_state(cd);
+		e = next_state(cd);
 
 		/* Initialize the states */
 		cd->nfa->states[b].op = EOL;
@@ -366,37 +344,35 @@ static void pattern(comp_data *cd)
 		transition(cd, m1->end, b);
 		push_seg(cd, m1->beg, e);
 	}
-	
+
 	/* Add the REC and STP states for submatch 0,
 	which captures the entire matching part of the string */
 	m1 = pop_seg(cd); /* pop the NFA */
-	
-	b = next_state(cd); 
-	e = next_state(cd); 
-	
+
+	b = next_state(cd);
+	e = next_state(cd);
+
 	cd->nfa->states[b].op = REC;
 	cd->nfa->states[b].data.idx = 0;
 	cd->nfa->states[e].op = STP;
 	cd->nfa->states[e].data.idx = 0;
-	
+
 	transition(cd, b, m1->beg);
 	transition(cd, m1->end, e);
-	
+
 	push_seg(cd, b, e);
 }
 
 /*
  *$	list	::= element ["|" list]
  */
-static void list(comp_data *cd)
-{
+static void list(comp_data *cd) {
 	short b, e, n1, n2;
 	nfa_segment *m;
 
 	element(cd);
 
-	if(cd->p[0] == '|')
-	{
+	if(cd->p[0] == '|') {
 		cd->p++;
 #ifdef DEBUG_OUTPUT
 		printf(" |");
@@ -409,8 +385,8 @@ static void list(comp_data *cd)
 		list(cd);	/* Compile the second NFA */
 		m = pop_seg(cd); /* pop NFA 2 */
 
-		n1 = next_state(cd); 
-		n2 = next_state(cd); 
+		n1 = next_state(cd);
+		n2 = next_state(cd);
 
 		cd->nfa->states[n1].op = CHC;
 		cd->nfa->states[n2].op = MOV;
@@ -425,8 +401,7 @@ static void list(comp_data *cd)
 /*
  *$	element	::= ("(" [":"] list ")" | value) [(("*"|"+"|"?")["?"])|("{" [digit+] ["," [digit+]] "}" ["?"])] [element]
  */
-static void element(comp_data *cd)
-{
+static void element(comp_data *cd) {
 	short b, e;
 	char bref;
 	nfa_segment *m;
@@ -439,19 +414,15 @@ static void element(comp_data *cd)
 
 	if(cd->p[0] == '$') return;
 
-	if(cd->p[0] == '(')
-	{
-		if(cd->p[1] == ':')
-		{
+	if(cd->p[0] == '(') {
+		if(cd->p[1] == ':') {
 			/* parenthesis used only for grouping */
 			bref = -1;
 			cd->p += 2;
 #ifdef DEBUG_OUTPUT
 			printf(" (:");
 #endif
-		}
-		else
-		{
+		} else {
 			/* parenthesis indicates a submatch capture */
 			bref = cd->nfa->n_subm++;
 			cd->p++;
@@ -463,8 +434,7 @@ static void element(comp_data *cd)
 		list(cd);
 		if(cd->p[0] != ')') THROW(WRX_BRACKET);
 
-		if(bref >= 0)
-		{
+		if(bref >= 0) {
 			/* back reference: */
 			m = pop_seg(cd);	/* Get the NFA within the parens */
 
@@ -487,8 +457,7 @@ static void element(comp_data *cd)
 #ifdef DEBUG_OUTPUT
 		printf(" )");
 #endif
-	}
-	else
+	} else
 		value(cd);
 
 	if(cd->p[0] == '$') return;
@@ -507,8 +476,7 @@ static void element(comp_data *cd)
 		transition(cd, b, e);
 
 		/* The actual differences between the operators are very subtle */
-		switch(cd->p[0])
-		{
+		switch(cd->p[0]) {
 			case '*':
 				transition(cd, m->end, b);
 				push_seg(cd, b, e);
@@ -529,17 +497,14 @@ static void element(comp_data *cd)
 		cd->p++;
 
 		/* Lazy evaluation? */
-		if(cd->p[0] == '?')
-		{
+		if(cd->p[0] == '?') {
 			cd->p++;
 			weaken(cd, b);
 #ifdef DEBUG_OUTPUT
 			printf(" ?");
 #endif
 		}
-	}
-	else if(cd->p[0] == '{')
-	{
+	} else if(cd->p[0] == '{') {
 		boc = 0;
 		eoc = 0;
 		cf = 0;
@@ -547,19 +512,16 @@ static void element(comp_data *cd)
 		cd->p++;
 		if(isdigit(cd->p[0])) cf = 1;
 
-		while(isdigit(cd->p[0]))
-		{
+		while(isdigit(cd->p[0])) {
 			boc = boc * 10 + (cd->p[0] - '0');
 			cd->p++;
 		}
 
-		if(cd->p[0] == ',')
-		{
+		if(cd->p[0] == ',') {
 			cf |= 2;
 			cd->p++;
 			if(isdigit(cd->p[0])) cf |= 4;
-			while(isdigit(cd->p[0]))
-			{
+			while(isdigit(cd->p[0])) {
 				eoc = eoc * 10 + (cd->p[0] - '0');
 				cd->p++;
 			}
@@ -677,11 +639,9 @@ static void element(comp_data *cd)
 #endif
 
 			/* Duplicate the states between sub1 and sub2 boc times */
-			for(i = 1; i < boc; i++)
-			{
+			for(i = 1; i < boc; i++) {
 				/* Create duplicates of all the states between sub1 and sub2 */
-				for(j = sub1; j < sub2; j++)
-				{
+				for(j = sub1; j < sub2; j++) {
 					/* Create a duplicate of the current state */
 					k = duplicate(cd, j);
 
@@ -718,8 +678,8 @@ static void element(comp_data *cd)
 			transition(cd, i, j);
 			transition(cd, e, i);
 
-			if(cd->p[0] == '?') /* weaken? */
-			{
+			/* weaken? */
+			if(cd->p[0] == '?') {
 				cd->p++;
 				weaken(cd, i);
 #ifdef DEBUG_OUTPUT
@@ -747,8 +707,8 @@ static void element(comp_data *cd)
 #ifdef DEBUG_OUTPUT
 			printf(" {,%d}", eoc);
 #endif
-			if(cd->p[0] == '?') /* weaken? */
-			{
+			/* weaken? */
+			if(cd->p[0] == '?') {
 				/* Weaken is not really useful here because
 					it's like saying ?? */
 				cd->p++;
@@ -767,11 +727,9 @@ static void element(comp_data *cd)
 			b += ofs; 			/* beginning of next NFA segment */
 
 			/* Duplicate the states between sub1 and sub2 boc times */
-			for(i = 1; i < eoc; i++)
-			{
+			for(i = 1; i < eoc; i++) {
 				/* Create duplicates of all the states between sub1 and sub2 */
-				for(j = sub1; j < sub2; j++)
-				{
+				for(j = sub1; j < sub2; j++) {
 					/* Create a duplicate of the current state */
 					k = duplicate(cd, j);
 
@@ -814,11 +772,9 @@ static void element(comp_data *cd)
 #endif
 
 			/* Duplicate the states between sub1 and sub2 boc times */
-			for(i = 1; i < boc; i++)
-			{
+			for(i = 1; i < boc; i++) {
 				/* Create duplicates of all the states between sub1 and sub2 */
-				for(j = sub1; j < sub2; j++)
-				{
+				for(j = sub1; j < sub2; j++) {
 					/* Create a duplicate of the current state */
 					k = duplicate(cd, j);
 
@@ -847,8 +803,7 @@ static void element(comp_data *cd)
 			/* Create a new NFA segment identical to "A" */
 
 			/* Create duplicates of all the states between sub1 and sub2 */
-			for(j = sub1; j < sub2; j++)
-			{
+			for(j = sub1; j < sub2; j++) {
 				/* Create a duplicate of the current state */
 				k = duplicate(cd, j);
 
@@ -886,11 +841,9 @@ static void element(comp_data *cd)
 			e = j;
 
 			/* Duplicate the "A?" states between sub1 and sub2 (eoc - boc - 1) times */
-			for(i = boc; i < eoc - 1; i++)
-			{
+			for(i = boc; i < eoc - 1; i++) {
 				/* Create duplicates of all the states between sub1 and sub2 */
-				for(j = sub1; j < sub2; j++)
-				{
+				for(j = sub1; j < sub2; j++) {
 					/* Create a duplicate of the current state */
 					k = duplicate(cd, j);
 
@@ -914,8 +867,8 @@ static void element(comp_data *cd)
 
 			push_seg(cd, m->beg, e);
 
-			if(cd->p[0] == '?') /* weaken? (we've already taken care of it) */
-			{
+			 /* weaken? (we've already taken care of it) */
+			if(cd->p[0] == '?') {
 				cd->p++;
 #ifdef DEBUG_OUTPUT
 				printf(" ?");
@@ -926,8 +879,7 @@ static void element(comp_data *cd)
 		} /* switch cf */
 	}
 
-	if(cd->p[0] && cd->p[0] != '|' && cd->p[0] != ')' && cd->p[0] != '$')
-	{
+	if(cd->p[0] && cd->p[0] != '|' && cd->p[0] != ')' && cd->p[0] != '$') {
 		m = pop_seg(cd); /* pop NFA 1 */
 		b = m->beg;
 		e = m->end;
@@ -947,10 +899,9 @@ static void value(comp_data *cd)
 {
 	short b, e, inv = 0, i;
 
-	if(isalnum(cd->p[0]) || cd->p[0] == ' ')
-	{
-		b = next_state(cd); 
-		e = next_state(cd); 
+	if(isalnum(cd->p[0]) || cd->p[0] == ' ') {
+		b = next_state(cd);
+		e = next_state(cd);
 
 		/* Initialize the states */
 		cd->nfa->states[b].op = cd->ci?MCI:MTC;
@@ -963,20 +914,18 @@ static void value(comp_data *cd)
 		printf(" '%c'", cd->p[0]);
 #endif
 		cd->p++;
-	}
-	else if(cd->p[0] == '[')
-	{
+	} else if(cd->p[0] == '[') {
 		cd->p++;
 
-		b = next_state(cd); 
-		e = next_state(cd); 
+		b = next_state(cd);
+		e = next_state(cd);
 
 #ifdef DEBUG_OUTPUT
 		printf(" [");
 #endif
 
-		if(cd->p[0] == '^') /* Invert the set? */
-		{
+		/* Invert the set? */
+		if(cd->p[0] == '^') {
 #ifdef DEBUG_OUTPUT
 			printf(" ^");
 #endif
@@ -1005,11 +954,9 @@ static void value(comp_data *cd)
 #ifdef DEBUG_OUTPUT
 		printf(" ]");
 #endif
-	}
-	else if(cd->p[0] == '.')
-	{
-		b = next_state(cd); 
-		e = next_state(cd); 
+	} else if(cd->p[0] == '.') {
+		b = next_state(cd);
+		e = next_state(cd);
 
 		/* Initialize the states */
 		cd->nfa->states[b].op = SET;
@@ -1031,11 +978,9 @@ static void value(comp_data *cd)
 		printf(" '%c'", cd->p[0]);
 #endif
 		cd->p++;
-	}
-	else if(cd->p[0] == '<')
-	{
-		b = next_state(cd); 
-		e = next_state(cd); 
+	} else if(cd->p[0] == '<') {
+		b = next_state(cd);
+		e = next_state(cd);
 
 		/* Initialize the states */
 		cd->nfa->states[b].op = BOW;
@@ -1047,11 +992,9 @@ static void value(comp_data *cd)
 		printf(" <");
 #endif
 		cd->p++;
-	}
-	else if(cd->p[0] == '>')
-	{
-		b = next_state(cd); 
-		e = next_state(cd); 
+	} else if(cd->p[0] == '>') {
+		b = next_state(cd);
+		e = next_state(cd);
 
 		/* Initialize the states */
 		cd->nfa->states[b].op = EOW;
@@ -1063,13 +1006,10 @@ static void value(comp_data *cd)
 		printf(" >");
 #endif
 		cd->p++;
-	}
-	else if(cd->p[0] == '$')
-	{
+	} else if(cd->p[0] == '$') {
 		return;
-	}
-	else if(cd->p[0] == ESC) /* 'escape sequence' */
-	{
+	} else if(cd->p[0] == ESC) {
+		/* 'escape sequence' */
 #ifdef DEBUG_OUTPUT
 		printf(" %c", cd->p[0]);
 #endif
@@ -1077,8 +1017,7 @@ static void value(comp_data *cd)
 
 		if(!cd->p[0])
 			THROW(WRX_ESCAPE);
-		if(cd->p[0] == 'i' || cd->p[0] == 'I')
-		{
+		if(cd->p[0] == 'i' || cd->p[0] == 'I') {
 #ifdef DEBUG_OUTPUT
 			printf(" '%c%c'", ESC, cd->p[0]);
 #endif
@@ -1086,27 +1025,23 @@ static void value(comp_data *cd)
 			cd->p++;
 			if(cd->p[0] && cd->p[0] != '$')
 				list(cd);
-			else
-			{
+			else {
 				/* Push a state that does nothing,
 					(otherwise higher level segments gets messed up) */
-				b = next_state(cd); 
+				b = next_state(cd);
 				cd->nfa->states[b].op = MOV;
 				push_seg(cd, b, b);
 			}
-		}
-		else if(strchr("daulswx", tolower(cd->p[0])))
-		{
+		} else if(strchr("daulswx", tolower(cd->p[0]))) {
 			/* Escape sequence for a set of characters */
-			b = next_state(cd); 
-			e = next_state(cd); 
+			b = next_state(cd);
+			e = next_state(cd);
 
 			/* Initialize the states */
 			cd->nfa->states[b].op = SET;
 
 			/* select the specific characters in this set */
-			switch(tolower(cd->p[0]))
-			{
+			switch(tolower(cd->p[0])) {
 				case 'd': cd->nfa->states[b].data.bv = create_bv("0-9"); break;
 				case 'a': cd->nfa->states[b].data.bv = create_bv("a-zA-Z"); break;
 				case 'u':
@@ -1144,11 +1079,9 @@ static void value(comp_data *cd)
 			printf("%c", cd->p[0]);
 #endif
 			cd->p++;
-		}
-		else if(strchr("rntb", cd->p[0]))
-		{
-			b = next_state(cd); 
-			e = next_state(cd); 
+		} else if(strchr("rntb", cd->p[0])) {
+			b = next_state(cd);
+			e = next_state(cd);
 
 			/* Initialize the states */
 
@@ -1180,12 +1113,10 @@ static void value(comp_data *cd)
 			printf(" '%c'", cd->p[0]);
 #endif
 			cd->p++;
-		}
-		else if(strchr(".*+?[](){}|^$<>:", cd->p[0]) || cd->p[0] == ESC)
-		{
+		} else if(strchr(".*+?[](){}|^$<>:", cd->p[0]) || cd->p[0] == ESC) {
 			/* Escape of control characters */
-			b = next_state(cd); 
-			e = next_state(cd); 
+			b = next_state(cd);
+			e = next_state(cd);
 
 			/* Initialize the states */
 			cd->nfa->states[b].op = MTC;
@@ -1198,19 +1129,16 @@ static void value(comp_data *cd)
 			printf("%c", cd->p[0]);
 #endif
 			cd->p++;
-		}
-		else if(isdigit(cd->p[0]))
-		{
+		} else if(isdigit(cd->p[0])) {
 			/* Back reference */
 			i = 0;
-			while (isdigit(cd->p[0]))
-			{
+			while (isdigit(cd->p[0])) {
 				i = i * 10 + (cd->p[0] - '0');
 				cd->p++;
 			}
 
-			b = next_state(cd); 
-			e = next_state(cd); 
+			b = next_state(cd);
+			e = next_state(cd);
 
 			/* Initialize the states */
 			if(cd->ci)
@@ -1226,9 +1154,7 @@ static void value(comp_data *cd)
 #ifdef DEBUG_OUTPUT
 			printf("%c", cd->p[0]);
 #endif
-		}
-		else
-		{
+		} else {
 			cd->p++;
 			THROW(WRX_ESCAPE);
 		}
@@ -1242,8 +1168,8 @@ static void value(comp_data *cd)
 		 * Note also that the '^' and the ':' can be used in escaped or
 		 * unescaped form (because of their limited use as special characters)
 		 */
-		b = next_state(cd); 
-		e = next_state(cd); 
+		b = next_state(cd);
+		e = next_state(cd);
 
 		/* Initialize the states */
 		cd->nfa->states[b].op = MTC;
@@ -1256,16 +1182,14 @@ static void value(comp_data *cd)
 		printf(" '%c'", cd->p[0]);
 #endif
 		cd->p++;
-	}
-	else
-	{
+	} else {
 #if 0
 		THROW(WRX_VALUE);
-#else		
+#else
 		/* This allows statements such as "(a|)", but causes other problems */
 		b = next_state(cd);
 		cd->nfa->states[b].op = MOV;
-		push_seg(cd, b, b);		
+		push_seg(cd, b, b);
 #endif
 	}
 }
@@ -1285,14 +1209,12 @@ static char *sets(comp_data *cd)
 	for(i = 0; i < 16; i++)
 		bv[i] = 0;
 
-	do
-	{
+	do {
 		if(cd->p[0] == '\0') THROW(WRX_ANGLEB);
 
 		u = cd->p[0];
 
-		if(u == ESC)
-		{
+		if(u == ESC) {
 #ifdef DEBUG_OUTPUT
 			printf(" '\\%c'", cd->p[1]);
 #endif
@@ -1381,9 +1303,7 @@ static char *sets(comp_data *cd)
 			} break;
 			}
 			cd->p += 2;
-		}
-		else
-		{
+		} else {
 			if(cd->p[1] == '-')
 			{
 				cd->p += 2;
@@ -1399,9 +1319,7 @@ static char *sets(comp_data *cd)
 					THROW(WRX_RNG_MISMATCH);
 				else if(isdigit(u) && !isdigit(v)) /* [0-a] is invalid */
 					THROW(WRX_RNG_MISMATCH);
-			}
-			else
-			{
+			} else {
 				v = u;
 			}
 
@@ -1422,17 +1340,14 @@ static char *sets(comp_data *cd)
 			else
 				printf(" '%c'", u);
 #endif
-			if(cd->ci)
-			{
+			if(cd->ci) {
 				/* case insensitive */
 				for(i = u; i <= v; i++)
 				{
 					BV_SET(bv, toupper(i));
 					BV_SET(bv, tolower(i));
 				}
-			}
-			else
-			{
+			} else {
 				for(i = u; i <= v; i++)
 					BV_SET(bv, i);
 			}
@@ -1449,11 +1364,9 @@ static char *sets(comp_data *cd)
 /*
  *	Optimizes the NFA slightly by circumventing all states marked MOV
  */
-static void optimize(wrx_nfa *nfa)
-{
+static void optimize(wrx_nfa *nfa) {
 	short i;
-	for(i = 0; i < nfa->ns; i++)
-	{
+	for(i = 0; i < nfa->ns; i++) {
 		while(nfa->states[nfa->states[i].s[0]].op == MOV)
 			nfa->states[i].s[0] = nfa->states[nfa->states[i].s[0]].s[0];
 
@@ -1470,8 +1383,7 @@ static void optimize(wrx_nfa *nfa)
  *	NFA Compiler. It initializes the wrx_nfa, and wraps around the
  *	parser functions above
  */
-wrx_nfa *wrx_comp(char *p, int *e, int *ep)
-{
+wrx_nfa *wrx_comp(char *p, int *e, int *ep) {
 	comp_data cd;
 	int ex;
 	short es;
@@ -1480,8 +1392,7 @@ wrx_nfa *wrx_comp(char *p, int *e, int *ep)
 	cd.nfa = NULL;
 
 	/* The exception handling: */
-	if((ex = setjmp(cd.jb)) != 0)
-	{
+	if((ex = setjmp(cd.jb)) != 0) {
 		if(cd.nfa) wrx_free_nfa(cd.nfa);
 		if(e) *e = ex;
 		if(ep) *ep = cd.p - cd.pat;
@@ -1525,14 +1436,14 @@ wrx_nfa *wrx_comp(char *p, int *e, int *ep)
 	if(cd.p[0] != '\0') longjmp(cd.jb, WRX_INVALID);
 
 	m = pop_seg(&cd);
-	
+
 	/* create a final end-om-match state */
-	es = next_state(&cd);	
+	es = next_state(&cd);
 	cd.nfa->states[es].op = EOM;
 	transition(&cd, m->end, es);
-	
+
 	cd.nfa->start = m->beg;
-	cd.nfa->stop = es;	
+	cd.nfa->stop = es;
 
 #ifdef OPTIMIZE
 	optimize(cd.nfa); /* Get rid of the MOV instructions */

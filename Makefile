@@ -44,12 +44,16 @@ wrx_free.o : wregex.h
 wrx_err.o : wrxcfg.h
 wgrep.o : wregex.h
 
+docs: 
+	doxygen
+
 .PHONY : clean wipe
 
 clean:
 	-rm -f *.o
 	-rm -f $(LIB)
 	-rm -f test wgrep *.exe
+	-rm -rf docs
 	
 wipe:
 	-rm -f *.o
