@@ -1144,7 +1144,7 @@ static void value(comp_data *cd) {
 		}
 	} else if(cd->p[0] != ESC && strchr("!\"#%&',-/:;=@\\_`~\r\t\n^", cd->p[0]) && cd->p[0]) {
 		/* non-alnum characters that don't need to be escaped
-		 * (not that I've included '\\' above because the escape character is
+		 * (note that I've included '\\' above because the escape character is
 		 * reconfigurable in wrxcfg.h, hence the "cd->p[0] != ESC")
 		 *
 		 * Note also that the '^' and the ':' can be used in escaped or
