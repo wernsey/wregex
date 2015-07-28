@@ -29,7 +29,7 @@
  *	Returns a description of the error code for wrx_comp()'s 'e' parameter or
  *	wrx_exec()'s return value;
  */
-const char *wrx_err(int code) {
+const char *wrx_error(int code) {
 	if(code >= 0) return "No error";
 
 	switch(code) {

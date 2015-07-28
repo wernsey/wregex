@@ -1,6 +1,7 @@
 CC=gcc
 CFLAGS=-c -Wall
 LDFLAGS=
+AWK=awk
 
 # Add your source files here:
 LIB_SOURCES=wrx_comp.c wrx_exec.c wrx_prnt.c wrx_free.c wrx_err.c
@@ -17,7 +18,7 @@ CFLAGS += -O2 -DNDEBUG
 LDFLAGS += -s
 endif
 
-all: test wgrep
+all: test wgrep docs
 
 lib: $(LIB)
 
@@ -36,24 +37,27 @@ $(LIB): $(LIB_OBJECTS)
 .c.o:
 	$(CC) $(CFLAGS) $< -o $@
 
-test.o : wregex.h wrx_prnt.h
 wrx_comp.o : wregex.h wrxcfg.h
 wrx_exec.o : wregex.h wrxcfg.h	
 wrx_prnt.o : wregex.h wrxcfg.h
 wrx_free.o : wregex.h
 wrx_err.o : wrxcfg.h
+
+test.o : wregex.h wrx_prnt.h
 wgrep.o : wregex.h
 
-docs: 
-	doxygen
+
+docs: manual.html
+
+manual.html: doc.awk wregex.h
+	$(AWK) -f $^ > $@
 
 .PHONY : clean wipe
 
-clean:
-	-rm -f *.o
+clean: wipe
 	-rm -f $(LIB)
 	-rm -f test wgrep *.exe
-	-rm -rf docs
+	-rm -rf manual.html
 	
 wipe:
 	-rm -f *.o

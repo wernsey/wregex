@@ -32,12 +32,12 @@
 
 int match(char *p, char *s) {
 	int e, ep;
-	wrx_nfa *r;
-	wrx_subm *subm;
+	wregex_t *r;
+	wregmatch_t *subm;
 
 	r = wrx_comp(p, &e, &ep);
 	if(!r) {
-		fprintf(stderr, "\nError: %d\n%s\n%*c: %s\n", e, p, ep, '^', wrx_err(e));
+		fprintf(stderr, "\nError: %d\n%s\n%*c: %s\n", e, p, ep, '^', wrx_error(e));
 		exit(EXIT_FAILURE);
 	}
 
@@ -45,19 +45,18 @@ int match(char *p, char *s) {
 		subm = calloc(sizeof *subm, r->n_subm);
 		if(!subm) {
 			fprintf(stderr, "Error: out of memory (submatches)\n");
-			wrx_free_nfa(r);
+			wrx_free(r);
 			exit(EXIT_FAILURE);
 		}
-	}
-	else
+	} else
 		subm = NULL;
 
 	e = wrx_exec(r, s, subm, r->n_subm);
 
-	if(e < 0) fprintf(stderr, "Error: %s\n", wrx_err(e));
+	if(e < 0) fprintf(stderr, "Error: %s\n", wrx_error(e));
 
 	free(subm);
-	wrx_free_nfa(r);
+	wrx_free(r);
 
 	return e;
 }
@@ -96,9 +95,9 @@ int main(int argc, char *argv[]) {
 
 	int total = 0, success = 0;
 
-	wrx_nfa *r;
+	wregex_t *r;
 	char *pat, *str = NULL;
-	wrx_subm *subm;
+	wregmatch_t *subm;
 
 	char *buf;
 
@@ -375,7 +374,7 @@ int main(int argc, char *argv[]) {
 				subm = calloc(sizeof *subm, nsm);
 				if(!subm) {
 					fprintf(stderr, "Error: out of memory (submatches)");
-					wrx_free_nfa(r);
+					wrx_free(r);
 					return 1;
 				}
 			}
@@ -408,7 +407,7 @@ int main(int argc, char *argv[]) {
 			} else if(e == 0)
 				printf("No match\n");
 			else
-				printf("Error in match: %s\n",  wrx_err(e));
+				printf("Error in match: %s\n",  wrx_error(e));
 
 			free(subm);
 		}
@@ -419,9 +418,9 @@ int main(int argc, char *argv[]) {
 		 */
 		wrx_print_dot(r, "nfa.dot");
 
-		wrx_free_nfa(r);
+		wrx_free(r);
 	} else {
-		fprintf(stderr, "\nError: %d\n%s\n%*c: %s", e, pat, ep, '^', wrx_err(e));
+		fprintf(stderr, "\nError: %d\n%s\n%*c: %s", e, pat, ep, '^', wrx_error(e));
 		return 1;
 	}
 

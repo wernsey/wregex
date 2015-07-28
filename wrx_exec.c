@@ -131,9 +131,9 @@ static stack_el* pop(stack *stk) {
 /*
  * Matches the string str to the NFA nfa, and stores the submatches in subm[]
  */
-int wrx_exec(const wrx_nfa *nfa, const char *str, wrx_subm subm[], int nsm) {
+int wrx_exec(const wregex_t *nfa, const char *str, wregmatch_t subm[], int nsm) {
 	short st; 			/* current state */
-	wrx_nfa_state *sp;	/* state pointer */
+	wrx_state *sp;	/* state pointer */
 
 	stack *stk;			/* The stack used for backtracking */
 	stack_el* sl;		/* last element popped from the stack */
@@ -142,14 +142,14 @@ int wrx_exec(const wrx_nfa *nfa, const char *str, wrx_subm subm[], int nsm) {
 				*s;		/* Tracks the beginning of the string */
 
 	char cont;			/* flag to continue */
-	
-	wrx_subm *spare_sm = NULL;
+
+	wregmatch_t *spare_sm = NULL;
 
 	/* various indexes and counters*/
 	int i, ctr, bol = 0, p;
 	const char *b;
-	wrx_subm *sm;
-	
+	wregmatch_t *sm;
+
 	int rv;
 	jmp_buf ex;	/* Exception handling */
 
@@ -180,8 +180,8 @@ int wrx_exec(const wrx_nfa *nfa, const char *str, wrx_subm subm[], int nsm) {
 		subm[i].beg = NULL;
 		subm[i].end = NULL;
 	}
-	
-	if((rv = setjmp(ex)) != 0) { 
+
+	if((rv = setjmp(ex)) != 0) {
 		/* Exception handling: Error or Match */
 		free_stack(stk);
 		free(spare_sm);
@@ -252,7 +252,7 @@ int wrx_exec(const wrx_nfa *nfa, const char *str, wrx_subm subm[], int nsm) {
 				p = push(stk, op_pos, cp, sp->s[1]);
 				if(p == 0 || p == -1)
 					THROW(p?WRX_STACK:WRX_MEMORY);
-					
+
 				/* and continue along the current route */
 				cont = 1;
 			} break;
@@ -295,7 +295,7 @@ int wrx_exec(const wrx_nfa *nfa, const char *str, wrx_subm subm[], int nsm) {
 
 				if(p == 0 || p == -1)
 					THROW(p?WRX_STACK:WRX_MEMORY);
-					
+
 				/* Record the beginning of the submatch */
 				if(sp->data.idx < nsm)
 					subm[sp->data.idx].beg = cp;
@@ -317,7 +317,7 @@ int wrx_exec(const wrx_nfa *nfa, const char *str, wrx_subm subm[], int nsm) {
 
 				if(p == 0 || p == -1)
 					THROW(p?WRX_STACK:WRX_MEMORY);
-					
+
 				/* Record the ending of the submatch */
 				if(sp->data.idx < nsm)
 					subm[sp->data.idx].end = cp;
@@ -331,24 +331,24 @@ int wrx_exec(const wrx_nfa *nfa, const char *str, wrx_subm subm[], int nsm) {
 				printf("BRF @ %d (%d)\n", st, sp->data.idx);
 #endif
 				i = sp->data.idx;
-				
+
 				if(i >= nfa->n_subm) /* The specified backreference does not exist */
 					THROW(WRX_INV_BREF);
 
-				if(i < nsm)		
+				if(i < nsm)
 					sm = &subm[i];
 				else
 					sm = &spare_sm[i];
-				
-				if(!sm->beg || !sm->end) /* The specified backreference or has not been matched */					
+
+				if(!sm->beg || !sm->end) /* The specified backreference or has not been matched */
 					THROW(WRX_INV_BREF);
-				
+
 				for(cont = 1, b = sm->beg; b < sm->end; b++, cp++)
 					if(b[0] != cp[0]) {
 						cont = 0;
 						break;
 					}
-					
+
 			} break;
 			case BRI:/* Match a (case insensitive) backreference */
 			{
@@ -356,24 +356,24 @@ int wrx_exec(const wrx_nfa *nfa, const char *str, wrx_subm subm[], int nsm) {
 				printf("BRI @ %d (%d)\n", st, sp->data.idx);
 #endif
 				i = sp->data.idx;
-				
+
 				if(i >= nfa->n_subm) /* The specified backreference does not exist */
 					THROW(WRX_INV_BREF);
 
-				if(i < nsm)		
+				if(i < nsm)
 					sm = &subm[i];
 				else
 					sm = &spare_sm[i];
-				
-				if(!sm->beg || !sm->end) /* The specified backreference or has not been matched */					
+
+				if(!sm->beg || !sm->end) /* The specified backreference or has not been matched */
 					THROW(WRX_INV_BREF);
-				
+
 				for(cont = 1, b = sm->beg; b < sm->end; b++, cp++)
 					if(tolower(b[0]) != tolower(cp[0])) {
 						cont = 0;
 						break;
-					}		
-								
+					}
+
 			} break;
 			case BOL: /* beginning of line */
 			{
@@ -395,7 +395,7 @@ int wrx_exec(const wrx_nfa *nfa, const char *str, wrx_subm subm[], int nsm) {
 				printf("EOL @ %d\n", st);
 #endif
 				if(cp[0] == '\r' || cp[0] == '\n' || cp[0] == '\0')
-					cont = 1;					
+					cont = 1;
 			} break;
 			case BOW: /* beginning of word */
 			{
@@ -523,6 +523,6 @@ int wrx_exec(const wrx_nfa *nfa, const char *str, wrx_subm subm[], int nsm) {
 	free_stack(stk);
 	free(spare_sm);
 	return rv;
-	
+
 #undef THROW
 }

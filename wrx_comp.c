@@ -27,7 +27,7 @@
 #include <string.h>
 #include <setjmp.h>
 #include <ctype.h>
-#include <assert.h> /* Remember the -DNDEBUG for release build */
+#include <assert.h>
 
 #include "wregex.h"
 #include "wrxcfg.h"
@@ -58,9 +58,9 @@ typedef struct {
  *	Internal data used while compiling the NFA
  */
 typedef struct {
-	wrx_nfa *nfa; /* The NFA being generated */
+	wregex_t *nfa; /* The NFA being generated */
 
-	char *pat,	  /* The pattern being compiled */
+	const char *pat,	  /* The pattern being compiled */
 		 *p;	  /* The position within the pattern */
 
 	jmp_buf jb;   /* Jump buffer for error handling */
@@ -77,7 +77,7 @@ typedef struct {
 /* Helper Functions (and macros) *********************************************/
 
 /*
- *	Gets and initializes the next available state in the wrx_nfa
+ *	Gets and initializes the next available state in the wregex_t
  *	realloc()s the NFA's states if there aren't enough available
  */
 static short next_state(comp_data *cd) {
@@ -101,7 +101,7 @@ static short next_state(comp_data *cd) {
 			cd->nfa->n_states += delta;
 
 		cd->nfa->states = realloc(cd->nfa->states,
-							cd->nfa->n_states * sizeof(wrx_nfa_state));
+							cd->nfa->n_states * sizeof(wrx_state));
 
 		if(!cd->nfa->states)
 			THROW(WRX_MEMORY);
@@ -149,9 +149,9 @@ static nfa_segment *pop_seg(comp_data *cd) {
  *	Has state s1 transition to s2
  */
 static void transition(comp_data *cd , short s1, short s2) {
-	if(cd->nfa->states[s1].s[0] < 0)
+	if(cd->nfa->states[s1].s[0] < 0) {
 		cd->nfa->states[s1].s[0] = s2;
-	else {
+	} else {
 		/* This assertion must hold because each NFA state has at most
 			2 epsilon transitions */
 		assert(cd->nfa->states[s1].s[1] < 0);
@@ -164,8 +164,7 @@ static void transition(comp_data *cd , short s1, short s2) {
  *	Function weaken makes the '*' and '+' (and '?') "lazy"/"non-greedy"
  *	by swapping s[0] and s[1] of the appropriate state
  */
-static void weaken(comp_data *cd, short s)
-{
+static void weaken(comp_data *cd, short s) {
 	short t;
 	assert(s >= 0 && s < cd->nfa->n_states);
 
@@ -178,8 +177,7 @@ static void weaken(comp_data *cd, short s)
  * 	Creates a duplicate of a particular state j.
  *	It is used with the "{}" operators to convert, say, "A{3}" to "AAA"
  */
-static int duplicate(comp_data *cd, short j)
-{
+static int duplicate(comp_data *cd, short j) {
 	int k;
 	char *bv;
 
@@ -207,8 +205,7 @@ static int duplicate(comp_data *cd, short j)
  *	see value() below.
  *	(It asserts input, so it is not intended for user input)
  */
-static char *create_bv(char *s)
-{
+static char *create_bv(char *s) {
 	char *bv, u, v, i;
 
 	assert(s && *s);
@@ -241,8 +238,7 @@ static char *create_bv(char *s)
 /*
  * Invert the bits in a range bit-vector
  */
-static void invert_bv(char *bv)
-{
+static void invert_bv(char *bv) {
 	int i;
 	/* Note that I leave the first 4 bytes (containing the bits of the
 	non-printable characters) as I found them */
@@ -550,8 +546,8 @@ static void element(comp_data *cd) {
 		switch(cf)
 		{
 		case 0:
-		case 2: /* {} or {,} - treat it as we would a '*' */
-			{
+		case 2: { /* {} or {,} - treat it as we would a '*' */
+
 				m = pop_seg(cd); /* Get the preceding NFA */
 
 				b = next_state(cd);
@@ -569,8 +565,7 @@ static void element(comp_data *cd) {
 				printf(" {}");
 #endif
 
-				if(cd->p[0] == '?') /* weaken? */
-				{
+				if(cd->p[0] == '?') { /* weaken? */
 					cd->p++;
 					weaken(cd, b);
 #ifdef DEBUG_OUTPUT
@@ -579,8 +574,7 @@ static void element(comp_data *cd) {
 				}
 
 			} break;
-		case 1: /* {boc} */
-		{
+		case 1: { /* {boc} */
 			sub2 = cd->nfa->ns;
 			m = pop_seg(cd);
 
@@ -593,11 +587,9 @@ static void element(comp_data *cd) {
 #endif
 
 			/* Duplicate the states between sub1 and sub2 boc times */
-			for(i = 1; i < boc; i++)
-			{
+			for(i = 1; i < boc; i++) {
 				/* Create duplicates of all the states between sub1 and sub2 */
-				for(j = sub1; j < sub2; j++)
-				{
+				for(j = sub1; j < sub2; j++) {
 					/* Create a duplicate of the current state */
 					k = duplicate(cd, j);
 
@@ -625,8 +617,7 @@ static void element(comp_data *cd) {
 			push_seg(cd, m->beg, e);
 
 		} break;
-		case 3: /* {boc,} - at least boc */
-		{
+		case 3: { /* {boc,} - at least boc */
 			sub2 = cd->nfa->ns;
 			m = pop_seg(cd);
 
@@ -689,8 +680,7 @@ static void element(comp_data *cd) {
 
 			push_seg(cd, m->beg, j);
 		} break;
-		case 6: /* {,eoc} - at most eoc */
-		{
+		case 6: { /* {,eoc} - at most eoc */
 			/* we treat "A{,3}" as "A?A?A?" */
 
 			m = pop_seg(cd); /* Get the preceding NFA A */
@@ -895,8 +885,7 @@ static void element(comp_data *cd) {
 /*
  *$ value	::= (A-Za-z0-9!"#%&',-/:;=@\\_`~\r\t\n) | '<' | '>' | "[" ["^"] sets "]" | "." | '\i' list | '\I' list | 'escape sequence'
  */
-static void value(comp_data *cd)
-{
+static void value(comp_data *cd) {
 	short b, e, inv = 0, i;
 
 	if(isalnum(cd->p[0]) || cd->p[0] == ' ') {
@@ -1023,9 +1012,9 @@ static void value(comp_data *cd)
 #endif
 			cd->ci = (cd->p[0] == 'i');
 			cd->p++;
-			if(cd->p[0] && cd->p[0] != '$')
+			if(cd->p[0] && cd->p[0] != '$') {
 				list(cd);
-			else {
+			} else {
 				/* Push a state that does nothing,
 					(otherwise higher level segments gets messed up) */
 				b = next_state(cd);
@@ -1044,15 +1033,13 @@ static void value(comp_data *cd)
 			switch(tolower(cd->p[0])) {
 				case 'd': cd->nfa->states[b].data.bv = create_bv("0-9"); break;
 				case 'a': cd->nfa->states[b].data.bv = create_bv("a-zA-Z"); break;
-				case 'u':
-				{
+				case 'u': {
 					if(cd->ci) /* '\u' has no case insensitive meaning */
 						cd->nfa->states[b].data.bv = create_bv("a-zA-Z");
 					else
 						cd->nfa->states[b].data.bv = create_bv("A-Z");
 				} break;
-				case 'l':
-				{
+				case 'l': {
 					if(cd->ci) /* '\l' has no case insensitive meaning */
 						cd->nfa->states[b].data.bv = create_bv("a-zA-Z");
 					else
@@ -1087,21 +1074,18 @@ static void value(comp_data *cd)
 
 			switch(cd->p[0])
 			{
-			case 'n' :
-			{
+			case 'n' : {
 				cd->nfa->states[b].op = MTC;
 				cd->nfa->states[b].data.c = '\n';
 			} break;
-			case 'r' :
-			{
+			case 'r' : {
 				cd->nfa->states[b].op = MTC;
 				cd->nfa->states[b].data.c = '\r';
 			} break;
-			case 't' :
-			{
+			case 't' : {
 				cd->nfa->states[b].op = MTC;
 				cd->nfa->states[b].data.c = '\t';
-			}break;
+			} break;
 			case 'b' : cd->nfa->states[b].op = BND; break;
 			}
 
@@ -1158,9 +1142,7 @@ static void value(comp_data *cd)
 			cd->p++;
 			THROW(WRX_ESCAPE);
 		}
-	}
-	else if(cd->p[0] != ESC && strchr("!\"#%&',-/:;=@\\_`~\r\t\n^", cd->p[0]) && cd->p[0])
-	{
+	} else if(cd->p[0] != ESC && strchr("!\"#%&',-/:;=@\\_`~\r\t\n^", cd->p[0]) && cd->p[0]) {
 		/* non-alnum characters that don't need to be escaped
 		 * (not that I've included '\\' above because the escape character is
 		 * reconfigurable in wrxcfg.h, hence the "cd->p[0] != ESC")
@@ -1198,8 +1180,7 @@ static void value(comp_data *cd)
  *$ sets 	::= (c ["-" c])+
  *$		where c is a printable ASCII character (>= 0x20)
  */
-static char *sets(comp_data *cd)
-{
+static char *sets(comp_data *cd) {
 	char *bv, u, v;
 	int i;
 
@@ -1220,39 +1201,32 @@ static char *sets(comp_data *cd)
 #endif
 			switch(cd->p[1])
 			{
-			case 'r':
-			{
+			case 'r': {
 				BV_SET(bv, '\r');
 			} break;
-			case 'n':
-			{
+			case 'n': {
 				BV_SET(bv, '\n');
 			} break;
-			case 't':
-			{
+			case 't': {
 				BV_SET(bv, '\t');
 			} break;
 			case ESC:
 			case '-':
 			case '^':
-			case ']':
-			{
+			case ']': {
 				BV_SET(bv, cd->p[1]);
 			} break;
-			case 'd':
-			{
+			case 'd': {
 				for(i = '0'; i <= '9'; i++)
 					BV_SET(bv, i);
 			} break;
-			case 'a':
-			{
+			case 'a': {
 				for(i = 'a'; i <= 'z'; i++)
 					BV_SET(bv, i);
 				for(i = 'A'; i <= 'Z'; i++)
 					BV_SET(bv, i);
 			} break;
-			case 'u':
-			{
+			case 'u': {
 				for(i = 'A'; i <= 'Z'; i++)
 					BV_SET(bv, i);
 
@@ -1263,8 +1237,7 @@ static char *sets(comp_data *cd)
 						BV_SET(bv, i);
 				}
 			} break;
-			case 'l':
-			{
+			case 'l': {
 				for(i = 'a'; i <= 'z'; i++)
 					BV_SET(bv, i);
 
@@ -1275,15 +1248,13 @@ static char *sets(comp_data *cd)
 						BV_SET(bv, i);
 				}
 			} break;
-			case 's':
-			{
+			case 's': {
 				BV_SET(bv, ' ');
 				BV_SET(bv, '\t');
 				BV_SET(bv, '\r');
 				BV_SET(bv, '\n');
 			} break;
-			case 'w':
-			{
+			case 'w': {
 				for(i = 'a'; i <= 'z'; i++)
 					BV_SET(bv, i);
 				for(i = 'A'; i <= 'Z'; i++)
@@ -1292,8 +1263,7 @@ static char *sets(comp_data *cd)
 					BV_SET(bv, i);
 				BV_SET(bv, '_');
 			} break;
-			case 'x':
-			{
+			case 'x': {
 				for(i = 'a'; i <= 'f'; i++)
 					BV_SET(bv, i);
 				for(i = 'A'; i <= 'F'; i++)
@@ -1342,8 +1312,7 @@ static char *sets(comp_data *cd)
 #endif
 			if(cd->ci) {
 				/* case insensitive */
-				for(i = u; i <= v; i++)
-				{
+				for(i = u; i <= v; i++) {
 					BV_SET(bv, toupper(i));
 					BV_SET(bv, tolower(i));
 				}
@@ -1364,7 +1333,7 @@ static char *sets(comp_data *cd)
 /*
  *	Optimizes the NFA slightly by circumventing all states marked MOV
  */
-static void optimize(wrx_nfa *nfa) {
+static void optimize(wregex_t *nfa) {
 	short i;
 	for(i = 0; i < nfa->ns; i++) {
 		while(nfa->states[nfa->states[i].s[0]].op == MOV)
@@ -1380,10 +1349,10 @@ static void optimize(wrx_nfa *nfa) {
 #endif
 
 /*
- *	NFA Compiler. It initializes the wrx_nfa, and wraps around the
+ *	NFA Compiler. It initializes the wregex_t, and wraps around the
  *	parser functions above
  */
-wrx_nfa *wrx_comp(char *p, int *e, int *ep) {
+wregex_t *wrx_comp(const char *p, int *e, int *ep) {
 	comp_data cd;
 	int ex;
 	short es;
@@ -1393,7 +1362,7 @@ wrx_nfa *wrx_comp(char *p, int *e, int *ep) {
 
 	/* The exception handling: */
 	if((ex = setjmp(cd.jb)) != 0) {
-		if(cd.nfa) wrx_free_nfa(cd.nfa);
+		if(cd.nfa) wrx_free(cd.nfa);
 		if(e) *e = ex;
 		if(ep) *ep = cd.p - cd.pat;
 		if(cd.seg) free(cd.seg);
@@ -1407,7 +1376,7 @@ wrx_nfa *wrx_comp(char *p, int *e, int *ep) {
 	/* We're case sensitive by default */
 	cd.ci = 0;
 
-	cd.nfa = malloc(sizeof(wrx_nfa));
+	cd.nfa = malloc(sizeof(wregex_t));
 	if(!cd.nfa) longjmp(cd.jb, WRX_MEMORY);
 
 	cd.nfa->states = NULL;
@@ -1418,7 +1387,7 @@ wrx_nfa *wrx_comp(char *p, int *e, int *ep) {
 
 	cd.nfa->n_states = (DELTA_STATES * (strlen(cd.p) + 1));
 	/* The +1 ensures that we can handle at least 0 length strings (BUGFIX) */
-	cd.nfa->states = malloc(cd.nfa->n_states * sizeof(wrx_nfa_state));
+	cd.nfa->states = malloc(cd.nfa->n_states * sizeof(wrx_state));
 	if(!cd.nfa->states) longjmp(cd.jb, WRX_MEMORY);
 
 	cd.nfa->ns = 0;

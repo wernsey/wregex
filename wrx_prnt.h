@@ -40,7 +40,7 @@ extern "C" {
  *	Prints the states in the NFA to stdout.
  *	For my own development and debugging purposes.
  */
-void wrx_print_nfa(wrx_nfa *nfa);
+void wrx_print_nfa(wregex_t *nfa);
 
 /*
  *	Prints an NFA's states in a format that can be used by the
@@ -48,7 +48,7 @@ void wrx_print_nfa(wrx_nfa *nfa);
  *	Use the following on the command line to draw the graph:
  *	>dot -Tjpg -o nfa.jpg filename
  */
-void wrx_print_dot(wrx_nfa *nfa, const char *filename);
+void wrx_print_dot(wregex_t *nfa, const char *filename);
 
 #if defined(__cplusplus) || defined(c_plusplus)
 } /* extern "C" */

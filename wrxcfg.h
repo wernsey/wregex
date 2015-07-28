@@ -23,7 +23,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* Opcodes in the NFA. Values for wrx_nfa_state::op  */
+/* Opcodes in the NFA. Values for wregex_t_state::op  */
 typedef enum {
 	MTC,	/* Match character */
 	MCI,	/* Match character, case insensitive */

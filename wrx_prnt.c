@@ -24,13 +24,13 @@
  */
 
 #include <stdio.h>
-#include <assert.h> /* Remember the -DNDEBUG for release build */
+#include <assert.h>
 
 #include "wregex.h"
 #include "wrxcfg.h"
 
 /*
- *	Returns a mnemonic for the specific opcode (wrx_nfa_state's op member)
+ *	Returns a mnemonic for the specific opcode (wrx_state's op member)
  */
 static const char *mnemonic(char op) {
 	switch(op) {
@@ -58,7 +58,7 @@ static const char *mnemonic(char op) {
  *	Prints the states in the NFA.
  *	For my own development and debugging purposes.
  */
-void wrx_print_nfa(wrx_nfa *nfa) {
+void wrx_print_nfa(wregex_t *nfa) {
 	short i, j;
 	printf("start: %d; stop: %d\n", nfa->start, nfa->stop);
 	for(i = 0; i < nfa->ns; i++) {
@@ -118,7 +118,7 @@ void wrx_print_nfa(wrx_nfa *nfa) {
  *	Prints an NFA's states in a format that can be used by the
  *	DOT tool to generate a graph
  */
-void wrx_print_dot(wrx_nfa *nfa, const char *filename)
+void wrx_print_dot(wregex_t *nfa, const char *filename)
 {
 	FILE *f;
 	int i, j;

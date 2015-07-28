@@ -3,7 +3,8 @@
 #include <string.h>
 
 /* for getopt() and path functions - non-portable */
-#include <unistd.h>
+//#include <unistd.h>
+#include "getopt.h"
 
 #include "wregex.h"
 
@@ -24,20 +25,20 @@ void usage(char *s) {
 }
 
 /*
- *  "greps" a file by matching each line in infile to the wrx_nfa, writes
+ *  "greps" a file by matching each line in infile to the wregex_t, writes
  *	the results to outfile.
  */
-void grep(wrx_nfa *r, FILE *infile, FILE *outfile, int flags) {
+void grep(wregex_t *r, FILE *infile, FILE *outfile, int flags) {
     char buffer[256], *sm;
-    wrx_subm *subm;
+    wregmatch_t *subm;
     int e, i, len;
 
-    /* Allocate enough memory for all the submatches in the wrx_nfa */
+    /* Allocate enough memory for all the submatches in the wregex_t */
     if(r->n_subm > 0) {
 	    subm = calloc(sizeof *subm, r->n_subm);
 	    if(!subm) {
 	        fprintf(stderr, "Error: out of memory");
-	        wrx_free_nfa(r);
+	        wrx_free(r);
 	        exit(EXIT_FAILURE);
 	    }
 	} else
@@ -47,7 +48,7 @@ void grep(wrx_nfa *r, FILE *infile, FILE *outfile, int flags) {
     while(!feof(infile)) {
         /* Read the line */
         if(fgets(buffer, sizeof buffer, infile) == buffer) {
-            /* Match the line to the wrx_nfa */
+            /* Match the line to the wregex_t */
             e = wrx_exec(r, buffer, subm, r->n_subm);
 
             if(e == 1 && flags & SUBMATCHES) {
@@ -78,7 +79,7 @@ void grep(wrx_nfa *r, FILE *infile, FILE *outfile, int flags) {
                 fputs(buffer, outfile);
             } else if(e < 0) {
                 /* A run-time error occured - print it */
-                fprintf(stderr, "Error in match: %s\n",  wrx_err(e));
+                fprintf(stderr, "Error in match: %s\n",  wrx_error(e));
                 exit(EXIT_FAILURE);
             }
         }
@@ -95,7 +96,7 @@ int main(int argc, char *argv[]) {
 
     int i, e, ep, flags = 0;
 
-    wrx_nfa *r; /* Used to store the compiled regular expression */
+    wregex_t *r; /* Used to store the compiled regular expression */
 
     /* Parse the command line options */
     while ((c = getopt(argc, argv, "o:vs?")) != EOF) {
@@ -125,12 +126,12 @@ int main(int argc, char *argv[]) {
     /* The pattern is the next command line argument */
     pat = argv[optind++];
 
-    /* Compile the regular expression into a wrx_nfa */
+    /* Compile the regular expression into a wregex_t */
     r = wrx_comp(pat, &e, &ep);
     if(!r) {
         /* Error occured - note how we use ep to indicate the
             position of the error */
-        fprintf(stderr, "Error: %d\n%s\n%*c: %s", e, pat, ep, '^', wrx_err(e));
+        fprintf(stderr, "Error: %d\n%s\n%*c: %s", e, pat, ep, '^', wrx_error(e));
         return 1;
     }
 
@@ -142,7 +143,7 @@ int main(int argc, char *argv[]) {
             infile = fopen(ifn, "r");
             if(!infile) {
                 fprintf(stderr, "Error: Unable to open %s for input", argv[i]);
-                wrx_free_nfa(r);
+                wrx_free(r);
                 return 1;
             }
             /* "grep" to input file */
@@ -156,8 +157,8 @@ int main(int argc, char *argv[]) {
         grep(r, stdin, outfile, flags);
     }
 
-    /* Deallocate the memory allocated to the wrx_nfa */
-    wrx_free_nfa(r);
+    /* Deallocate the memory allocated to the wregex_t */
+    wrx_free(r);
 
     return 0;
 }

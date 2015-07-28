@@ -30,7 +30,7 @@
 /*
  *	Deallocates an NFA
  */
-void wrx_free_nfa(wrx_nfa *nfa) {
+void wrx_free(wregex_t *nfa) {
 	int i;
 
 	/* Free all the characeter set bit vectors */
