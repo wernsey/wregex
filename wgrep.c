@@ -3,8 +3,7 @@
 #include <string.h>
 
 /* for getopt() and path functions - non-portable */
-//#include <unistd.h>
-#include "getopt.h"
+#include <unistd.h>
 
 #include "wregex.h"
 
