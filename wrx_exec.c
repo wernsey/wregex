@@ -381,9 +381,9 @@ int wrx_exec(const wregex_t *nfa, const char *str, wregmatch_t subm[], int nsm) 
 				printf("BOL @ %d\n", st);
 #endif
 				bol = 1;
-				if(cp == str)
+				if(cp == str) {
 					cont = 1;
-				else {
+				} else {
 					assert(cp > str);
 					if(cp[-1] == '\r' || cp[-1] == '\n')
 						cont = 1;
