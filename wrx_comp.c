@@ -262,8 +262,7 @@ static char *sets(comp_data *cd);
 /*
  *$ pattern	::= ['^'] [list] ['$']
  */
-static void pattern(comp_data *cd)
-{
+static void pattern(comp_data *cd) {
 	short b, e, bol = 0, hl = 0;
 	nfa_segment *m1, *m2;
 
@@ -453,13 +452,13 @@ static void element(comp_data *cd) {
 #ifdef DEBUG_OUTPUT
 		printf(" )");
 #endif
-	} else
+	} else {
 		value(cd);
+	}
 
 	if(cd->p[0] == '$') return;
 
-	if(cd->p[0] && strchr("*+?", cd->p[0]))
-	{
+	if(cd->p[0] && strchr("*+?", cd->p[0])) {
 		m = pop_seg(cd); /* Get the preceding NFA */
 
 		b = next_state(cd);
@@ -869,7 +868,10 @@ static void element(comp_data *cd) {
 		} /* switch cf */
 	}
 
-	if(cd->p[0] && cd->p[0] != '|' && cd->p[0] != ')' && cd->p[0] != '$') {
+	if(cd->p[0] && cd->p[0] != '|' && (cd->p[0] != ')' || cd->nfa->n_subm == 1) && cd->p[0] != '$') {
+		/* The `|| cd->nfa->n_subm == 1` above is for patterns like `\(.*)` where the ) is not part of
+			a capturing group */
+
 		m = pop_seg(cd); /* pop NFA 1 */
 		b = m->beg;
 		e = m->end;
@@ -1142,7 +1144,7 @@ static void value(comp_data *cd) {
 			cd->p++;
 			THROW(WRX_ESCAPE);
 		}
-	} else if(cd->p[0] != ESC && strchr("!\"#%&',-/:;=@\\_`~\r\t\n^", cd->p[0]) && cd->p[0]) {
+	} else if(cd->p[0] && cd->p[0] != ESC && (isgraph(cd->p[0]) || isspace(cd->p[0]))) {
 		/* non-alnum characters that don't need to be escaped
 		 * (note that I've included '\\' above because the escape character is
 		 * reconfigurable in wrxcfg.h, hence the "cd->p[0] != ESC")

@@ -1,5 +1,4 @@
-
-# WRegex
+# wregex
 
 ## Introduction
 
@@ -18,7 +17,7 @@ for details.
 
 Just a small disclaimer:
 
-1. WRegex tries to be practical, but it does not try to conform to any standards
+1. **wregex** tries to be practical, but it does not try to conform to any standards
 	(since it was written for use in a scripting language).
 2. I have no intention of adding Unicode support (it seems that if I wanted
 	Unicode support, I should've designed for it from the beginning).
@@ -27,7 +26,7 @@ Just a small disclaimer:
 
 ### Usage
 
-Like most regular expression engines, WRegex first requires that the regular
+Like most regular expression engines, **wregex** first requires that the regular
 expression first be compiled to a NFA-like data structure (`wregex_t` defined in
 `wregex.h`). The compilation happens in the function `wrx_comp()` which takes a
 string (`char*`) argument containing the expression, and returns the compiled NFA
@@ -259,7 +258,7 @@ using '\' as an escape character)
 
 ## My TODO and pitfalls list:
 
-Like all backtracking expression engines, WRegex is susceptible to problems:
+Like all backtracking expression engines, **wregex** is susceptible to problems:
 * The expression `"(:a*)*b"` cannot match "aaaaab" and will cause a runtime error.
 	In general expressions such as this where there's a `'*'` on both sides of the
 	')' should be avoided, or one should use lazy operators `'*?'` and `'+?'` as in
@@ -285,7 +284,7 @@ Because of this expressions like `((((a{1,100})){1,100}){1,100}){1,100}` can be
 very expensive, this one requiring O(100^4) states internally to store the
 `wregex_t`.
 
-In the current version of WRegex `wrx_comp()` will complain that too many states
+In the current version of **wregex** `wrx_comp()` will complain that too many states
 are required to store the above expression, and there are currently no plans to
 remedy this.
 
@@ -344,27 +343,6 @@ http://www.regular-expressions.info/refext.html:
 	name e.g. `(?<group>abc|def)=\k<group>` matches `abc=abc` or `def=def`, but not
 	`abc=def` or `def=abc`.
 	
-**FIXME** I witnessed a segfault with the following command line: `wgrep "\[i]" manual.html`.
-The problem is with the ']' that does not get treated as a literal, causing infinite
-recursion in the `element()` function when compiling. Here's a sample of the stacktrace.
-
-	#0  value (cd=0x28fe2c) at wrx_comp.c:1145
-	#1  0x00403acd in element (cd=0x28fe2c) at wrx_comp.c:457
-	#2  0x00404cf3 in element (cd=0x28fe2c) at wrx_comp.c:876
-	#3  0x00404cf3 in element (cd=0x28fe2c) at wrx_comp.c:876
-	#4  0x00404cf3 in element (cd=0x28fe2c) at wrx_comp.c:876
-	#5  0x004037c7 in list (cd=0x28fe2c) at wrx_comp.c:369
-	#6  0x00403508 in pattern (cd=0x28fe2c) at wrx_comp.c:301
-	#7  0x00406783 in wrx_comp (p=0x991dd8 "\\[i]", e=0x28fec8, ep=0x28fec4) at wrx_comp.c:1403
-	#8  0x00401abc in main (argc=3, argv=0x991920) at wgrep.c:130
-
-I think the solution is in this line, which looks a bit 
-	
-	1145 } else if(cd->p[0] != ESC && strchr("!\"#%&',-/:;=@\\_`~\r\t\n^", cd->p[0]) && cd->p[0]) {
-
-Related to this, The regex `\(i)` doesn't compile. I think it should compile to
-the equivalent of `\(i\)`, but I'm not sure how it will affect the parser.
-	
 ## References:
 
 In implementing this Regex pattern matcher,  I consulted these sources:
@@ -401,12 +379,11 @@ In implementing this Regex pattern matcher,  I consulted these sources:
 	discusses catastrophic backtracking.
 * [14] http://en.wikipedia.org/wiki/Regex
 
-	Some people, when confronted with a problem, think "I know, I'll use regular
-	expressions." Now they have two problems.
-		- Jamie Zawinski
+> Some people, when confronted with a problem, think "I know, I'll use regular
+> expressions." Now they have two problems. - Jamie Zawinski
 
 ## License
-
+```
 	Copyright (c) 2007-2015 Werner Stoop
 
 	Permission is hereby granted, free of charge, to any person
@@ -429,3 +406,4 @@ In implementing this Regex pattern matcher,  I consulted these sources:
 	WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 	FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 	OTHER DEALINGS IN THE SOFTWARE.
+```
