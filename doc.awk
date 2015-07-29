@@ -63,7 +63,7 @@ function filter(ss,        j, k1, k2, k3)
 	gsub(/_}/, "</u>", ss);	
 	
 	# Hyperlinks (excuse my primitive regex)
-	gsub(/http:\/\/[a-zA-Z0-9._\/\-%~]+/, "<a href=\"&\">&</a>", ss);
+	gsub(/http:\/\/[a-zA-Z0-9._\/\-%~?=+]+/, "<a href=\"&\">&</a>", ss);
 	
 	# Use a ##word to specify an anchor, eg. ##foo gets translated to <span id="foo">foo</a>
 	while(j = match(ss, /##[A-Za-z0-9_]+/)) {

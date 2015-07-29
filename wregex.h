@@ -1,13 +1,13 @@
 /*
- *1	WRegex
+ *1	wregex
  *#	This is my regular expression engine implementation. It supports a fairly
  *#	large language, with curly braces, anchors, sub-match extraction, back
  *#	references and lazy (non-greedy) evaluation.\n
  *# 
- *#	This document describes the API used for embedding {*Wregex*} into an
+ *#	This document describes the API used for embedding {*wregex*} into an
  *#	application.
  *# Please refer to the {{README.md}} for a more detailed description of the
- *# syntax, symantics and internal aspects of {*Wregex*}.
+ *# syntax, symantics and internal aspects of {*wregex*}.
  *{
  **	In general, a regular expression is compiled into a {{wregex_t}} structure using
  *#	{{wrx_comp()}}.
@@ -50,7 +50,7 @@ typedef struct _wregex_t_state
 
 /*-
  *@ typedef struct _wregex_t wregex_t
- *# Structure representing a complete NFA.
+ *# Structure representing a complete NFA of the regular expression.
  */
 typedef struct _wregex_t
 {
@@ -62,15 +62,11 @@ typedef struct _wregex_t
 	short	start,	/* The start state */
 			stop;	/* The stop state */
 
-	/*
-	 *	Number of submatches in the NFA, essentially the number of '('s in
-	 *	the regex
-	 */
+	/*	Number of submatches in the NFA, essentially the number
+	 *	of '('s in the regex */
 	int	  n_subm;
 
-	/*
-	 * Copy of the pattern passed to wrx_comp()
-	 */
+	/* Copy of the pattern passed to wrx_comp() */
 	char *p;
 } wregex_t;
 
@@ -176,7 +172,7 @@ const char *wrx_error(int code);
  *}
  *-
  **2 License
- *#	{*Wregex*} is released under the {/MIT-license/}:
+ *#	{*wregex*} is released under the {/MIT-license/}:
  *[
  *# Copyright (c) 2007-2015 Werner Stoop
  *#

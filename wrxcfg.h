@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Werner Stoop
+ * Copyright (c) 2007-2015 Werner Stoop
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
