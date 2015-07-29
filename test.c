@@ -340,6 +340,20 @@ int main(int argc, char *argv[]) {
 		NOMATCH("^$", "abc\ndef"); /* but not here */
 
 		NOMATCH("^$", "abc");
+		
+		/* There was a bug with an unescaped ']'. \[x\] and \[x] should be equivalent. */
+		MATCH("^\\[x*\\]$", "[xxxxxxxxxxxx]");
+		MATCH("^\\[x*]$", "[xxxxxxxxxxxx]");
+		NOMATCH("^\\[x*]$", "[xxxxxxxxxxxx");
+		MATCH("]+", "]]]]]]]");
+		NOMATCH("]+", "[[[[[[[[[");
+		
+		/* An unmatched ')' broke in a different but related way. */
+		MATCH("^\\(x*\\)$", "(xxxxxxxxxxxx)");
+		MATCH("^\\(x*)$", "(xxxxxxxxxxxx)");
+		NOMATCH("^\\(x*)$", "(xxxxxxxxxxxx");
+		MATCH(")+", ")))))))");
+		NOMATCH(")+", "((((((((");
 
 		printf("\n______________\nSuccess: %d/%d\n", success, total);
 
