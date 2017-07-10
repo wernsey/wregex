@@ -61,24 +61,27 @@ static const char *mnemonic(char op) {
 void wrx_print_nfa(wregex_t *nfa) {
 	short i, j;
 	printf("start: %d; stop: %d\n", nfa->start, nfa->stop);
+	
+	assert(nfa->states[nfa->stop].op == EOM);
+	
 	for(i = 0; i < nfa->ns; i++) {
 #ifdef OPTIMIZE
 		if(nfa->states[i].op == MOV) continue;
 #endif
 
-		printf("%2d ", i);
+		printf("%3d ", i);
 
 		printf("%s ", mnemonic(nfa->states[i].op));
 
 		if(nfa->states[i].op == MTC || nfa->states[i].op == MCI) {
 			if(nfa->states[i].data.c == '\n')
-				printf(" \\n ");
+				printf(" '\\n' ");
 			else if(nfa->states[i].data.c == '\r')
-				printf(" \\r ");
+				printf(" '\\r' ");
 			else if(nfa->states[i].data.c == '\t')
-				printf(" \\t ");
+				printf(" '\\t' ");
 			else
-				printf("'%c' ", nfa->states[i].data.c);
+				printf("'%c'", nfa->states[i].data.c);
 		} else if(nfa->states[i].op == SET) {
 			printf("[");
 			assert(nfa->states[i].data.bv);
@@ -98,7 +101,9 @@ void wrx_print_nfa(wregex_t *nfa) {
 
 			printf("] ");
 		} else if(nfa->states[i].op == REC || nfa->states[i].op == STP || nfa->states[i].op == BRF) {
-			printf("<%d> ", nfa->states[i].data.idx);
+			printf("<%d>", nfa->states[i].data.idx);
+		} else if(nfa->states[i].op == CHC) {
+			printf("---");
 		}
 
 		if(nfa->states[i].s[0] >= 0) {
@@ -124,6 +129,7 @@ void wrx_print_dot(wregex_t *nfa, const char *filename)
 	int i, j;
 
 	f = fopen(filename, "w");
+	fprintf(f, "# Use like so: dot -Tgif -o outfile.gif %s\n", filename);
 	fprintf(f, "digraph G {\n");
 
 	fprintf(f, "  rankdir=LR;\n");
@@ -131,23 +137,29 @@ void wrx_print_dot(wregex_t *nfa, const char *filename)
 	fprintf(f, "  fontsize=8;\n");
 
 	fprintf(f, "  start [shape=box];\n");
-	fprintf(f, "  stop  [shape=doublecircle];\n");
 
 	fprintf(f, "  start -> state%03d;\n", nfa->start);
-	fprintf(f, "  state%03d -> stop;\n", nfa->stop);
 
 	for(i = 0; i < nfa->ns; i++) {
 		if(nfa->states[i].op == MOV) continue;
 
 		if(nfa->states[i].op == SET) {
-			fprintf(f, "  state%03d [label=\"", i);
+			fprintf(f, "  state%03d [label=\"[", i);
 			assert(nfa->states[i].data.bv);
 			for(j = START_OF_PRINT; j < 127; j++) {
-				if(BV_TST(nfa->states[i].data.bv, j))
-					fprintf(f, "%c", j);
+				if(BV_TST(nfa->states[i].data.bv, j)) {
+					if(j == '\"')
+						fprintf(f, "\\%c", j);
+					else
+						fprintf(f, "%c", j);
+				}
 			}
-			fprintf(f, "\"];\n");
-		} else if(nfa->states[i].op == REC)
+			fprintf(f, "]\",shape=box];\n");
+		} else if(nfa->states[i].op == CHC)
+			fprintf(f, "  state%03d [label=\"\",shape=point];\n", i);
+		else if(nfa->states[i].op == EOM)
+			fprintf(f, "  state%03d [label=\"stop\",shape=doublecircle];\n", i);
+		else if(nfa->states[i].op == REC)
 			fprintf(f, "  state%03d [label=\"%d\",shape=triangle];\n", i, nfa->states[i].data.idx);
 		else if(nfa->states[i].op == STP)
 			fprintf(f, "  state%03d [label=\"%d\",shape=invtriangle];\n", i, nfa->states[i].data.idx);
@@ -161,17 +173,16 @@ void wrx_print_dot(wregex_t *nfa, const char *filename)
 			fprintf(f, "  state%03d [label=BOW,shape=circle];\n", i);
 		else if(nfa->states[i].op == EOW)
 			fprintf(f, "  state%03d [label=EOW,shape=circle];\n", i);
-		else if(nfa->states[i].op >= START_OF_PRINT)
-			fprintf(f, "  state%03d [label=\"%c\",shape=circle];\n", i, nfa->states[i].op);
-		else if(nfa->states[i].op == '\n')
-			fprintf(f, "  state%03d [label=\"\\\\n\",shape=circle];\n", i);
-		else if(nfa->states[i].op == '\r')
-			fprintf(f, "  state%03d [label=\"\\\\r\",shape=circle];\n", i);
-		else if(nfa->states[i].op == '\t')
-			fprintf(f, "  state%03d [label=\"\\\\t\",shape=circle];\n", i);
-		else
-			fprintf(f, "  state%03d [label=\"\",shape=circle];\n", i);
-
+		else if(nfa->states[i].op == MTC) {
+			if(nfa->states[i].data.c == '\n')
+				fprintf(f, "  state%03d [label=\"'\\n\"',shape=circle];\n", i);
+			else if(nfa->states[i].data.c == '\r')
+				fprintf(f, "  state%03d [label=\"'\\r\"',shape=circle];\n", i);
+			else if(nfa->states[i].data.c == '\t')
+				fprintf(f, "  state%03d [label=\"'\\t\"',shape=circle];\n", i);
+			else
+				fprintf(f, "  state%03d [label=\"'%c'\",shape=circle];\n", i, nfa->states[i].data.c);
+		}
 
 		if((j = nfa->states[i].s[0]) >= 0)
 			fprintf(f, "    state%03d -> state%03d [style=bold];\n", i, j);

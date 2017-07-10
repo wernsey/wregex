@@ -161,8 +161,8 @@ static void transition(comp_data *cd , short s1, short s2) {
 }
 
 /*
- *	Function weaken makes the '*' and '+' (and '?') "lazy"/"non-greedy"
- *	by swapping s[0] and s[1] of the appropriate state
+ *	Function weaken() makes the '*' and '+' (and '?') operators 
+ *	"lazy"/"non-greedy" by swapping s[0] and s[1] of the appropriate state
  */
 static void weaken(comp_data *cd, short s) {
 	short t;
@@ -868,10 +868,7 @@ static void element(comp_data *cd) {
 		} /* switch cf */
 	}
 
-	if(cd->p[0] && cd->p[0] != '|' && (cd->p[0] != ')' || cd->nfa->n_subm == 1) && cd->p[0] != '$') {
-		/* The `|| cd->nfa->n_subm == 1` above is for patterns like `\(.*)` where the ) is not part of
-			a capturing group */
-
+	if(cd->p[0] && cd->p[0] != '|' && cd->p[0] != ')' && cd->p[0] != '$') {
 		m = pop_seg(cd); /* pop NFA 1 */
 		b = m->beg;
 		e = m->end;
@@ -1144,7 +1141,7 @@ static void value(comp_data *cd) {
 			cd->p++;
 			THROW(WRX_ESCAPE);
 		}
-	} else if(cd->p[0] && cd->p[0] != ESC && (isgraph(cd->p[0]) || isspace(cd->p[0]))) {
+	} else if(cd->p[0] && cd->p[0] != ESC && cd->p[0] != ')' && (isgraph(cd->p[0]) || isspace(cd->p[0]))) {
 		/* non-alnum characters that don't need to be escaped
 		 * (note that I've included '\\' above because the escape character is
 		 * reconfigurable in wrxcfg.h, hence the "cd->p[0] != ESC")

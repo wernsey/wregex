@@ -30,14 +30,16 @@
 #include "wregex.h"
 #include "wrx_prnt.h"
 
-int match(char *p, char *s) {
+#define match(p, s)   _match(p, s, __FILE__, __LINE__)
+
+static int _match(const char *p, const char *s, const char *file, int line) {
 	int e, ep;
 	wregex_t *r;
 	wregmatch_t *subm;
 
 	r = wrx_comp(p, &e, &ep);
 	if(!r) {
-		fprintf(stderr, "\nError: %d\n%s\n%*c: %s\n", e, p, ep, '^', wrx_error(e));
+		fprintf(stderr, "\n[%s:%d] ERROR......: %s\n%s\n%*c\n", file, line, wrx_error(e), p, ep + 1, '^');
 		exit(EXIT_FAILURE);
 	}
 
@@ -67,12 +69,13 @@ int match(char *p, char *s) {
 					if(match(x,y) == 1) \
 					{\
 						success++;\
-						printf("[%2d] SUCCESS....: \"%s\" =~ \"%s\"\n", total, x, y);\
+						printf("[%s:%3d] SUCCESS....: \"%s\" =~ \"%s\"\n", __FILE__, __LINE__, x, y);\
 					}\
 					else\
 					{\
-						printf("[%2d] FAIL.......: \"%s\" !~ \"%s\"\n", total, x, y);\
+						printf("[%s:%3d] FAIL.......: \"%s\" !~ \"%s\"\n", __FILE__, __LINE__, x, y);\
 					}\
+                    fflush(stdout);\
 					} while(0)
 
 
@@ -82,12 +85,13 @@ int match(char *p, char *s) {
 					if(match(x,y) != 1) \
 					{\
 						success++;\
-						printf("[%2d] SUCCESS....: \"%s\" !~ \"%s\"\n", total, x, y);\
+						printf("[%s:%3d] SUCCESS....: \"%s\" !~ \"%s\"\n", __FILE__, __LINE__, x, y);\
 					}\
 					else\
 					{\
-						printf("[%2d] FAIL.......: \"%s\" =~ \"%s\"\n", total, x, y);\
+						printf("[%s:%3d] FAIL.......: \"%s\" =~ \"%s\"\n", __FILE__, __LINE__, x, y);\
 					}\
+                    fflush(stdout);\
 					} while(0)
 
 int main(int argc, char *argv[]) {
@@ -142,6 +146,23 @@ int main(int argc, char *argv[]) {
 		MATCH("ab|cd|ef", "acd");
 		MATCH("ab|cd|ef", "aef");
 		NOMATCH("ab|cd|ef", "ace");
+		
+		MATCH("a(b|c)d", "abd");
+		MATCH("a(b|c)d", "acd");
+		NOMATCH("a(b|c)d", "aed");
+		
+		MATCH("a(b|)d", "abd");
+		MATCH("a(b|)d", "ad");
+		NOMATCH("a(b|)d", "aed");		
+		
+		/* Non capturing groups */
+		MATCH("a(:b|c)d", "abd");
+		MATCH("a(:b|c)d", "acd");
+		NOMATCH("a(:b|c)d", "aed");
+		
+		MATCH("a(:b|)d", "abd");
+		MATCH("a(:b|)d", "ad");
+		NOMATCH("a(:b|)d", "aed");		
 
 		/* Match exactly 2 */
 		MATCH("ab{2}c", "abbc");
@@ -341,19 +362,22 @@ int main(int argc, char *argv[]) {
 
 		NOMATCH("^$", "abc");
 		
-		/* There was a bug with an unescaped ']'. \[x\] and \[x] should be equivalent. */
+		/* An unescaped ']' can be treated as a literal: \[x\] and \[x] should be equivalent. */
 		MATCH("^\\[x*\\]$", "[xxxxxxxxxxxx]");
 		MATCH("^\\[x*]$", "[xxxxxxxxxxxx]");
 		NOMATCH("^\\[x*]$", "[xxxxxxxxxxxx");
 		MATCH("]+", "]]]]]]]");
 		NOMATCH("]+", "[[[[[[[[[");
 		
-		/* An unmatched ')' broke in a different but related way. */
+		/* A '\(' MUST be matched with a '\)';
+		It is a bit inconsistent with the behaviour of the unescaped ']' in the
+		previous tests.
+		*/
 		MATCH("^\\(x*\\)$", "(xxxxxxxxxxxx)");
-		MATCH("^\\(x*)$", "(xxxxxxxxxxxx)");
-		NOMATCH("^\\(x*)$", "(xxxxxxxxxxxx");
-		MATCH(")+", ")))))))");
-		NOMATCH(")+", "((((((((");
+		NOMATCH("^\\(x*\\)$", "(xxxxxxxxxxxx");
+		NOMATCH("^\\(x*\\)$", "(xxxxxxxxxxxx");
+		MATCH("\\)+", ")))))))");
+		NOMATCH("\\)+", "((((((((");
 
 		printf("\n______________\nSuccess: %d/%d\n", success, total);
 

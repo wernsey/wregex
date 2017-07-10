@@ -98,6 +98,8 @@ typedef enum {
 since they're redundant (but useful for debugging) */
 #define OPTIMIZE
 
-/* Define this to print details about the internals of the
+/* Define DEBUG_OUTPUT to print details about the internals of the
 system to stdout */
-/*#define DEBUG_OUTPUT*/
+#if !defined(NDEBUG) && 0
+#define DEBUG_OUTPUT
+#endif

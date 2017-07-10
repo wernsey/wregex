@@ -36,7 +36,7 @@ extern "C" {
 /*
  * A single state in the NFA
  */
-typedef struct _wregex_t_state
+typedef struct _wrx_state
 {
 	char op;	/* opcode */
 	short s[2]; /* State transitions */
