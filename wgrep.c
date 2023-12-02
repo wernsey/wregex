@@ -34,7 +34,7 @@ void grep(wregex_t *r, FILE *infile, FILE *outfile, int flags) {
 
     /* Allocate enough memory for all the submatches in the wregex_t */
     if(r->n_subm > 0) {
-	    subm = calloc(sizeof *subm, r->n_subm);
+	    subm = (wregmatch_t **)calloc(sizeof *subm, r->n_subm);
 	    if(!subm) {
 	        fprintf(stderr, "Error: out of memory");
 	        wrx_free(r);
